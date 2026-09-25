@@ -89,7 +89,7 @@ no file owns both rules and DOM.
 - **Machines + switches (the fifth verb).** A machine is a data row with `machine: true`
   - non-knockable, non-distractable, stationary. Two faces ship: the **camera** (scans a
   cone, trips the **alarm** on a sustained look - stop it with its **switch**, a fixed
-  single-tile operator you face and tap, latching off) and the **laser** (a beam that blinks
+  single-tile operator you step onto and tap, latching off) and the **laser** (a beam that blinks
   live/dormant on the duty cycle - touch the live beam and it trips the alarm; **no switch**,
   its defense is pure timing). Both share `machineAlarm` (an escalation, not a hit). Machines
   are pushed after the post/sleeper designation so they never shift the stride-rule indices.
