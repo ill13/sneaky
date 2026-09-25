@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>SNEAK RUN</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="wrap">
+    <div id="hud">
+      <!-- hidden: updateHUD() still writes these spans each frame; render()
+           mirrors the text into the canvas top strip (arcade: info left, minimap right) -->
+      <span id="objective">OBJECTIVE: FIND THE KEY</span>
+      <span id="status"></span>
+      <span id="timer">0.0s</span>
+      <span id="seed"></span>
+    </div>
+    <div id="radar">
+      <!-- #radar is an unstyled spacer; #minimap is position:absolute to the
+           viewport, so the radar floats over the top-right of the play field.
+           #hud reserves the right column (--mini) so it never covers the seed/? -->
+      <canvas id="minimap" width="156" height="102"></canvas>
+      <span id="power" class="hidden"></span>
+    </div>
+    <div id="stage">
+      <canvas id="game" width="640" height="480"></canvas>
+      <div id="note-toast"></div>
+      <button type="button" id="btn-menu" title="Menu (M)">&#9776;</button>
+      <div id="menu" class="hidden">
+        <div class="menu-head">MENU</div>
+        <div class="menu-seed">seed <b id="menu-seed">42</b></div>
+        <button type="button" id="menu-help">HOW TO PLAY</button>
+        <button type="button" id="menu-restart">RESTART <span class="menu-key">R</span></button>
+        <button type="button" id="menu-new">NEW RUN <span class="menu-key">N</span></button>
+        <button type="button" id="menu-seedtype">TYPE SEED <span class="menu-key">T</span></button>
+        <div class="menu-inv"><div class="menu-inv-head">INVENTORY</div><div id="menu-inv" class="menu-inv-empty">nothing</div></div>
+        <button type="button" id="menu-close">CLOSE</button>
+      </div>
+      <div id="overlay" class="hidden">
+        <div id="overlay-text">CAUGHT</div>
+        <div id="overlay-sub">press R or Enter to restart</div>
+      </div>
+      <div id="intro">
+        <div id="intro-box">
+          <h1>SNEAK RUN <span id="ver" class="ver">v0.1.0</span></h1>
+          <button type="button" id="btn-play">PLAY</button>
+          <p class="intro-goal">3 KEYS &rarr; DOORS &rarr; FILE &rarr; EXIT &nbsp;&middot;&nbsp; never get caught twice.</p>
+          <p id="briefing" class="intro-briefing"></p>
+          <div class="intro-grid">
+            <ol class="intro-rules">
+              <li>Find the three <b>colored keys</b> (blue / gold / red). They're hidden inside <b>furniture</b> - desks, cabinets, copiers, the safe. Walk up to a piece and <b>hold ACT</b> to search it (a green ring fills while you work). You don't know where the keys are yet - the <b>notes</b> left in the furniture do. Search the rooms up top first and read what you find: each note names a room, and that room lights up on the minimap. Then go get the key. Each key opens its matching <b>door</b> on the sealed bottom row - the <b>red</b> door guards the <b>FILE</b>, the <b>blue</b> door guards the <b>EXIT</b>, the gold one opens a side trip. Steal the file, reach the exit.</li>
+              <li>Guards see in cones you can't see. The <b>minimap</b> (top right) lights up each room as you explore it - rooms you haven't walked stay dark, and you can't see guards or containers in them. Bank an <b>UPGRADE</b> and it reveals their cones. A <b>?</b> warns a guard is turning your way; a <b>!</b> means it's spotted you (red = looking, yellow = searching). Break line of sight for 3s and they lose you.</li>
+              <li>One hit = <b>ALARM</b>: the compound goes hot (faster, sharper, they stop giving up). Stay hidden 10s and it cools. A second hit = CAUGHT.</li>
+              <li>One <b>ACT</b> button does it all by context: behind a guard you <b>knock</b> it out for 10s; next to a downed one you <b>grab</b> it and carry it to a bin to <b>hide</b> it; pressed toward a wall you <b>distract</b> the guards in the room - the noise is the wall you're facing, and they'll walk over to investigate (they can't hear through doors, and a guard already chasing you won't break off); held against a <b>piece of furniture</b> you <b>search</b> it. Guard actions always beat a distraction, and carrying a body leaves your hands full - you can only hide it or drop it.</li>
+              <li>Some guards are <b>stuck at a post</b> (watch for the pedestal) - only their head turns, in 90-degree steps. Cross when the gaze swings away, or get behind it and knock it out. And a body left in the open gets <b>found and shaken awake</b> by a passing guard, so get it to a bin fast.</li>
+              <li>The map is a loop with a detour: the file is deep, the exit is a full sweep back. Dead-end rooms off the path hold <b>UPGRADES</b> (V speed, H hush, W weight) - tucked in a piece of furniture to search. Exploring costs time, and it pays out for the rest of the run.</li>
+            </ol>
+            <div class="intro-side">
+              <table class="intro-keys">
+                <tr><td>Move</td><td>WASD / arrows</td><td>stick / dpad</td><td>4-way pad</td></tr>
+                <tr><td>Act (knockout / grab / hide / distract / search)</td><td>E / Space</td><td>X / Y</td><td>ACT</td></tr>
+                <tr><td>Menu (seed / retry)</td><td>M</td><td>-</td><td>&#9776;</td></tr>
+                <tr><td class="dbg-key">Debug: bank every item</td><td>G</td><td>-</td><td>-</td></tr>
+              </table>
+              <p class="intro-hint">Enter / any move key also starts. ? reopens this panel.</p>
+            </div>
+          </div>
+        </div>
+        <div id="intro-scroll" aria-hidden="true">&#9660; SCROLL</div>
+      </div>
+      <div id="touch-ui">
+        <div id="touch-dpad" role="group" aria-label="Move">
+          <button type="button" class="dpad-btn" id="dpad-up" aria-label="Move up">&#9650;</button>
+          <button type="button" class="dpad-btn" id="dpad-left" aria-label="Move left">&#9664;</button>
+          <button type="button" class="dpad-btn" id="dpad-right" aria-label="Move right">&#9654;</button>
+          <button type="button" class="dpad-btn" id="dpad-down" aria-label="Move down">&#9660;</button>
+        </div>
+        <div id="touch-btns">
+          <button type="button" id="btn-act" title="Act: knock out a guard, grab/hide a body, or distract from a wall - the context decides">ACT</button>
+        </div>
+      </div>
+    </div>
+    <div id="rotate-hint">&#8635; rotate to landscape for a bigger view - portrait still works</div>
+  </div>
+  <!-- Classic scripts, shared global scope, in dependency order. Kept flat (no ES
+       modules: they can't load over file://) - the inline note on each line is that
+       file's one responsibility (Phase 7: one job per file, no file owns both rules
+       and DOM). -->
+  <script src="src/config.js"></script>                <!-- constants + VERSION -->
+  <script src="src/unit.js"></script>                  <!-- UNIT_TYPES stat table, statsFor, makeUnit -->
+  <script src="src/rng.js"></script>                   <!-- seeded RNG (mulberry32) -->
+  <script src="src/content.js"></script>               <!-- procedural content: obstacle shapes, patterns, pools, containers -->
+  <script src="src/theme.js"></script>                 <!-- the swappable presentation layer (names/sprites/rooms/briefing) -->
+  <script src="src/state.js"></script>                 <!-- makeGuard + the initial state shape -->
+  <script src="src/mapgen.js"></script>                <!-- room layout, obstacles, paths, reachability -->
+  <script src="src/sight.js"></script>                 <!-- vision rules: canSee / preSpot / hasLOS + the fog owner -->
+  <script src="src/movement.js"></script>              <!-- motion rules: tryMove / freeMove (radius-aware) -->
+  <script src="src/path.js"></script>                  <!-- A*: the ONE pathfinding algorithm (roomPath) -->
+  <script src="src/ai.js"></script>                    <!-- guard AI: the room-confined pursuit state machine -->
+  <script src="src/hud.js"></script>                   <!-- DOM: the menu panel + HUD text/buttons -->
+  <script src="src/game.js"></script>                  <!-- reset(): builds a run from a seed -->
+  <script src="src/update.js"></script>                <!-- update(): orchestration + player interactions + combat -->
+  <script src="src/controller.js"></script>            <!-- stepPlayer + processIntents: consumes player intents -->
+  <script src="src/replay.js"></script>                <!-- runReplay: deterministic, serializable run driver -->
+  <script src="src/render.js"></script>                <!-- canvas: world, minimap, cones, HUD -->
+  <script src="src/vendor/responsive-gamepad.umd.js"></script> <!-- gamepad lib (needed by controls.js) -->
+  <script src="src/controls.js"></script>              <!-- touch d-pad + buttons, gamepad poll -->
+  <script src="src/input.js"></script>                 <!-- keyboard -> raw held input + meta intents -->
+  <script src="src/main.js"></script>                  <!-- boot, the main loop, the __SNEAK dev hooks -->
+</body>
+</html>

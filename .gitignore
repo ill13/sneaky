@@ -1,0 +1,40 @@
+# ============================================================
+#  SNEAK RUN - .gitignore
+#  Rule of thumb: ship the game + docs + the permanent test suite.
+#  Keep out: personal/user-managed dirs, throwaway working files,
+#  and the large captured-screenshot artifacts.
+# ============================================================
+
+# --- personal / user-managed (never commit; never delete) ---
+.ill13/
+_trash/
+tools/_trash/
+
+# --- captured screenshots (dev artifacts, ~8M of PNGs) ---
+# Covers tools/screenshots/ and the top-level screenshots/ dir.
+# Docs reference these by filename only (no image links), so nothing breaks.
+screenshots/
+
+# --- throwaway working scripts (the permanent suite is test-*.js + named tools) ---
+tools/_*.js
+tools/_*.cjs
+
+# --- node / build (zero-dep today; guard for the future) ---
+node_modules/
+dist/
+build/
+*.log
+*.tmp
+
+# --- OS junk ---
+.DS_Store
+Thumbs.db
+desktop.ini
+nul
+
+# --- editor / IDE ---
+.vscode/
+.idea/
+.obsidian/
+*.swp
+*~

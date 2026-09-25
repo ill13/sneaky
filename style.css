@@ -1,0 +1,459 @@
+/* SNEAK RUN - plain CSS, no dependencies. Mobile-first layout. */
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html {
+
+width: 100vw;
+height: 100dvh; /* dvh adapts to mobile browser chrome */
+}
+
+body {
+  background: #0b0d12;
+  color: #c8cdd8;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden; /* the page IS the game: column is exactly viewport-sized */
+  /* padding + safe areas (notch / home indicator on phones) */
+  padding: 8px;
+  padding-top: calc(8px + env(safe-area-inset-top, 0px));
+  padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+  padding-left: calc(8px + env(safe-area-inset-left, 0px));
+  padding-right: calc(8px + env(safe-area-inset-right, 0px));
+  touch-action: manipulation;              /* kills double-tap zoom delay */
+  -webkit-user-select: none; user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+/* touch devices: the page IS the game, no scroll, no pull-to-refresh */
+@media (pointer: coarse) {
+  body { overflow: hidden; overscroll-behavior: none; }
+}
+
+#wrap {
+  /* full-bleed column: full width on phones, capped at 640px on desktop.
+     height = the whole viewport; the canvas takes everything the HUD leaves */
+  width: min(100%, 640px);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+#hud {
+  display: none;                /* header is now drawn in the canvas top strip (arcade: info left, minimap right) */
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;             /* worst-case strings can drop a line on phones */
+  gap: 6px 10px;
+  padding: 7px 10px;
+  background: #14171f;
+  border: 1px solid #262b38;
+  border-bottom: none;
+  font-size: 13px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+#objective { color: #8fd3ff; }
+
+#status {
+  color: #ff5252;
+  font-weight: bold;
+}
+/* only danger states pulse; calm states sit still */
+#status.blink {
+  animation: blink 0.5s steps(2) infinite;
+}
+
+@keyframes blink {
+  50% { opacity: 0.25; }
+}
+
+#timer { color: #6f7688; }
+
+#seed { color: #57d98a; }
+
+#btn-menu {
+  position: absolute;           /* overlay: top-left of the play area, inside the canvas strip */
+  top: 13px; left: 10px;
+  z-index: 6;
+  width: 26px; height: 26px;
+  border: 1px solid #3a4152;
+  border-radius: 7px;
+  background: #1a1e28;
+  color: #8fd3ff;
+  font: bold 15px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+#btn-menu:active, #btn-menu.open { background: #2a3040; }
+
+/* hamburger menu panel: dropdown anchored to the top-left button */
+#menu {
+  position: absolute;
+  top: 45px; left: 10px;
+  z-index: 5;
+  width: 172px;
+  background: rgba(16, 19, 27, 0.97);
+  border: 1px solid #2c3444;
+  border-radius: 8px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+#menu.hidden { display: none; }
+.menu-head {
+  font: bold 12px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  letter-spacing: 2px; color: #8fd3ff;
+}
+.menu-seed {
+  font: 11px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  letter-spacing: 1px; color: #57d98a; margin-bottom: 2px;
+}
+.menu-seed b { color: #c8cdd8; }
+#menu button {
+  border: 1px solid #2c3444; border-radius: 5px; background: #1a1e28;
+  color: #c8cdd8; font: 12px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  letter-spacing: 1px; padding: 7px 8px; cursor: pointer; text-align: left;
+  display: flex; justify-content: space-between; align-items: center;
+}
+#menu button:active { background: #2a3040; }
+.menu-key { color: #57d98a; font-size: 10px; }
+.menu-inv { margin-top: 2px; border-top: 1px solid #2c3444; padding-top: 5px; }
+.menu-inv-head {
+  font: bold 10px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  letter-spacing: 2px; color: #6f7688; margin-bottom: 3px;
+}
+#menu-inv {
+  font: 11px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: #8b93a7; min-height: 14px;
+}
+#menu-inv-empty { color: #4a5262; font-style: italic; }
+
+#stage {
+  position: relative;
+  line-height: 0;
+  width: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* F34: the note/clue you just read - a brief banner over the play area. A
+   dim paper tone for flavor, a brighter gold for the clues (the intel that
+   lights up the minimap). Transient; never blocks the controls. */
+#note-toast {
+  position: absolute;
+  left: 50%;
+  top: 27%;
+  transform: translateX(-50%);
+  max-width: 80%;
+  padding: 8px 14px;
+  font-size: 13px;
+  line-height: 1.4;
+  letter-spacing: 0.3px;
+  color: #d8c9a0;
+  text-align: center;
+  background: rgba(12, 14, 20, 0.88);
+  border: 1px solid #4a4230;
+  border-radius: 3px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s;
+}
+#note-toast.show { opacity: 1; }
+#note-toast.clue {
+  color: #ffe9a8;
+  border-color: #8a7430;
+  background: rgba(28, 24, 12, 0.93);
+  font-weight: 600;
+}
+
+#game {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border: 1px solid #262b38;
+  background: #14161c;
+  image-rendering: pixelated;
+}
+
+#overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  background: rgba(10, 12, 18, 0.78);
+}
+
+#overlay.hidden { display: none; }
+
+#overlay-text {
+  font-size: clamp(28px, 9vw, 40px);
+  font-weight: bold;
+  letter-spacing: 6px;
+  color: #ff5252;
+}
+
+#overlay-text.win { color: #57d98a; }
+
+#overlay-sub {
+  font-size: 14px;
+  letter-spacing: 2px;
+  color: #8b93a7;
+  text-align: center;
+  padding: 0 8px;
+}
+
+/* start-of-run instructions modal */
+#intro {
+  position: fixed;          /* full-viewport modal: not trapped inside the stage */
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 12px;            /* breathing room so the box never touches the edge */
+  background: rgba(8, 10, 15, 0.88);
+  z-index: 5;
+}
+#intro.hidden { display: none; }
+/* "scroll down" marker: shown while the box is scrollable and not at the
+   bottom; wired in hud.js */
+#intro-scroll {
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: #8fd3ff;
+  animation: intro-bob 1.1s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 6;
+  display: none;
+}
+@keyframes intro-bob {
+  0%, 100% { transform: translate(-50%, 0); }
+  50%      { transform: translate(-50%, 7px); }
+}
+
+#intro-box {
+  width: min(94%, 580px);
+  max-height: 100%;
+  overflow-y: auto;
+  background: #12151d;
+  border: 1px solid #2c3444;
+  padding: 16px 18px;
+  line-height: 1.35;
+}
+#intro-box h1 {
+  font-size: clamp(20px, 6vmin, 26px);
+  letter-spacing: 8px;
+  color: #8fd3ff;
+  text-align: center;
+  margin-bottom: 5px;
+  white-space: nowrap;   /* keep the version tag on one line with the title */
+}
+#intro-box h1 .ver {
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: #5a6478;
+  vertical-align: middle;
+  margin-left: 4px;
+  font-weight: normal;
+}
+.intro-goal {
+  text-align: center;
+  color: #8b93a7;
+  font-size: clamp(11px, 2.9vmin, 13px);
+  letter-spacing: 1px;
+  margin-bottom: 6px;
+}
+.intro-briefing {
+  text-align: center;
+  color: #b9c2d8;
+  font-size: clamp(11px, 2.9vmin, 13px);
+  font-style: italic;
+  letter-spacing: 0.3px;
+  margin-bottom: 8px;
+  max-width: 34ch;
+  margin-left: auto;
+  margin-right: auto;
+}
+.intro-rules {
+  margin: 0 0 8px 18px;
+  font-size: clamp(11px, 2.9vmin, 13px);
+  color: #c8cdd8;
+}
+.intro-rules li { margin-bottom: 3px; }
+.intro-rules b { color: #ffd65a; }
+.intro-keys {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: clamp(10px, 2.7vmin, 12px);
+  color: #9aa3b8;
+  margin-bottom: 10px;
+}
+.intro-keys td {
+  border: 1px solid #2c3444;
+  padding: 2px 5px;
+  text-align: center;
+}
+.intro-keys td:first-child { color: #8fd3ff; text-align: left; }
+.intro-keys .dbg-key { color: #5a6478; font-style: italic; }   /* F35: the debug row reads as a dev tool */
+#btn-play {
+  display: block;
+  width: 100%;
+  padding: 11px 0;
+  margin: 3px 0 12px;   /* sits full-width under the title, above the rules */
+  background: #1e3a2a;
+  border: 1px solid #57d98a;
+  color: #57d98a;
+  font: bold 17px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  letter-spacing: 5px;
+  cursor: pointer;
+}
+#btn-play:active { background: #2a5439; }
+.intro-hint {
+  text-align: center;
+  font-size: clamp(9px, 2.5vmin, 11px);
+  color: #6f7688;
+  margin-top: 8px;
+}
+/* responsive intro: default (portrait / desktop) is a single column - the box
+   is plain block flow: h1, goal, rules, keys, button, hint. */
+.intro-grid { display: block; }
+.intro-side { display: block; }
+/* short landscape screens (wide + low): a single column is taller than the
+   stage, so split it - rules on the left, keys + PLAY on the right. This halves
+   the content height so the whole intro fits without scrolling. */
+@media (orientation: landscape) and (max-height: 620px) {
+  #intro { padding: 6px; }                       /* more vertical room for the box */
+  #intro-box {
+    width: min(96%, 680px);
+    padding: 10px 14px;                          /* tighter than the 16px 18px default */
+    line-height: 1.3;
+  }
+  #intro-box h1 { margin-bottom: 2px; }
+  .intro-goal { margin-bottom: 4px; }
+  /* PLAY sits full-width above the grid here, so give it a slimmer footprint */
+  #btn-play { padding: 7px 0; margin: 2px 0 8px; font-size: 15px; letter-spacing: 4px; }
+  .intro-grid {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    column-gap: 16px;
+  }
+  .intro-rules { margin-bottom: 0; }
+  .intro-side {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+}
+
+/* minimap retired in 0.1.0: sight wedges now draw in-world on the board.
+   The canvas stays in the DOM (hidden) so any saved refs don't break. */
+#radar { display: none; }   /* spacer retired: header + minimap now live in the canvas top strip */
+#minimap { display: none; }
+
+/* banked dead-end upgrades (hidden until one is picked up) */
+#power {
+  color: #8fd3ff;
+  letter-spacing: 1px;
+}
+#power.hidden { display: none; }
+
+/* portrait phones: portrait is now a first-class orientation (the map runs
+   vertically, A spawn down to G exit) - the rotate nudge is retired */
+#rotate-hint {
+  display: none;
+}
+
+/* small screens: tighter HUD; the minimap is gone so the full width is free */
+@media (max-width: 480px) {
+  #hud { font-size: 10px; gap: 4px 8px; padding: 6px 8px; letter-spacing: 0; }
+  #overlay-sub { font-size: 11px; letter-spacing: 1px; }
+  #btn-menu { width: 22px; height: 22px; font-size: 13px; }
+  #menu { width: 150px; }
+}
+
+/* ============================================================
+   touch controls: layout is always defined (the library caches the
+   element's bounding rect), visibility follows the pointer type.
+   sizes scale with the viewport; safe areas keep them off the
+   home indicator / notch
+   ============================================================ */
+#touch-ui {
+  display: none;
+  position: absolute;
+  left: 0; top: 0; right: 0; bottom: 0;
+  pointer-events: none;
+}
+.dpad-btn, #touch-btns button {
+  pointer-events: auto;
+  touch-action: none;
+  -webkit-touch-callout: none;
+}
+#touch-dpad {
+  position: absolute;
+  left: calc(12px + env(safe-area-inset-left, 0px));
+  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  width: clamp(108px, 32vmin, 140px);
+  height: clamp(108px, 32vmin, 140px);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 4px;
+  pointer-events: none;   /* the group is transparent; the four buttons capture */
+}
+.dpad-btn {
+  border: 1px solid rgba(143, 211, 255, 0.4);
+  border-radius: 8px;
+  background: rgba(20, 24, 34, 0.5);
+  color: rgba(207, 232, 216, 0.85);
+  font-size: clamp(13px, 4vmin, 17px);
+  line-height: 1;
+  padding: 0;
+}
+.dpad-btn:active { background: rgba(143, 211, 255, 0.32); }
+#dpad-up    { grid-column: 2; grid-row: 1; }
+#dpad-left  { grid-column: 1; grid-row: 2; }
+#dpad-right { grid-column: 3; grid-row: 2; }
+#dpad-down  { grid-column: 2; grid-row: 3; }
+#touch-btns {
+  position: absolute;
+  right: calc(12px + env(safe-area-inset-right, 0px));
+  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  gap: 10px;
+}
+#touch-btns button {
+  width: clamp(46px, 15vmin, 58px);
+  height: clamp(46px, 15vmin, 58px);
+  border: 2px solid rgba(87, 217, 138, 0.5);
+  border-radius: 50%;
+  background: rgba(20, 24, 34, 0.55);
+  color: #cfe8d8;
+  font: bold clamp(15px, 4.5vmin, 20px) -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+#touch-btns button.active { background: rgba(87, 217, 138, 0.35); }
+/* ACT button (F27/F32): dim when no context resolves, glows when it would act -
+   the lit state is the affordance (e.g. the distract only lights while you're
+   pressing toward a wall), so the two states must be unmistakable */
+#btn-act.dim { border-color: rgba(87, 217, 138, 0.22); color: rgba(207, 232, 216, 0.5); opacity: 0.55; }
+#btn-act.lit { border-color: rgba(87, 217, 138, 1); color: #eafff2; box-shadow: 0 0 10px rgba(87, 217, 138, 0.55); }
+/* attract (knock) button: blue, dim until you are next to a wall, glows when it can fire */
+#btn-knock { border-color: rgba(143, 211, 255, 0.5); }
+#btn-knock.dim { border-color: rgba(143, 211, 255, 0.22); color: rgba(180, 200, 230, 0.5); opacity: 0.55; }
+#btn-knock.lit { border-color: rgba(143, 211, 255, 1); color: #e0f0ff; box-shadow: 0 0 10px rgba(143, 211, 255, 0.55); }
+@media (pointer: coarse) {
+  #touch-ui { display: block; }
+}
