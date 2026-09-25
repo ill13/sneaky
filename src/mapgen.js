@@ -403,6 +403,40 @@ function placeRobot(m, room) {
   }
   return { path, sw };
 }
+// F43: a pushable crate's home tile. A floor tile near the room's horizontal
+// centre, kept clear of the tiles in `avoid` (the machine, its switch, the robot
+// lane, and the room's containers - so it never lands on quest furniture).
+function placeCrate(m, room, avoid) {
+  const [ox, oy] = roomOrigin(room[0], room[1]);
+  const mid = oy + 4;
+  const bad = new Set((avoid || []).map(([c, r]) => c + ',' + r));
+  let best = null, bd = Infinity;
+  for (let r = oy + 1; r <= oy + 8; r++) for (let c = ox + 1; c <= ox + 14; c++) {
+    if (m[r][c] !== 0 || bad.has(c + ',' + r)) continue;
+    const d = Math.abs(r - mid) * 10 + Math.abs(c - (ox + 7));
+    if (d < bd) { bd = d; best = [c, r]; }
+  }
+  return best;
+}
+// F43: the container tiles in one room (so a crate keeps clear of the furniture).
+function containerTiles(containers, room) {
+  return containers.filter((ct) => ct.rc === room[0] && ct.rr === room[1]).map((ct) => [ct.c, ct.r]);
+}
+// F43: one crate in each switch room (the camera room E, the robot room H),
+// off the machine, its switch, the robot lane, and the room's containers.
+function crateRow(m, camSw, robotPos, containers) {
+  if (!TOOLS.crate) return [];
+  const out = [];
+  if (camSw) {
+    const p = placeCrate(m, CAM_ROOM, [camSw.cam, camSw.sw, ...containerTiles(containers, CAM_ROOM)]);
+    if (p) out.push(p);
+  }
+  if (robotPos) {
+    const p = placeCrate(m, ROBOT_ROOM, [robotPos.sw, ...robotPos.path, ...containerTiles(containers, ROBOT_ROOM)]);
+    if (p) out.push(p);
+  }
+  return out;
+}
 
 function generateLayout(seed) {
   for (let attempt = 0; attempt < 96; attempt++) {
@@ -468,6 +502,7 @@ function generateLayout(seed) {
       const camSw = placeCameraSwitch(m, CAM_ROOM);   // F39: the camera + its switch
       const laserPos = placeLaser(m, LASER_ROOM);     // F40: the laser emitter
       const robotPos = placeRobot(m, ROBOT_ROOM);     // F42: the robot lane + its switch
+      const cratePos = crateRow(m, camSw, robotPos, assigned.containers);   // F43: one crate per switch room
       return {
         map: m, paths, spawn, exit, hideSpots, seed, usedSeed: seed + attempt,
         containers: assigned.containers,   // the final containers (solid, with contents)
@@ -475,6 +510,7 @@ function generateLayout(seed) {
         camSw,                              // F39: { cam: [c,r], sw: [c,r] } | null
         laserPos,                           // F40: [c,r] of the laser emitter | null
         robotPos,                           // F42: { path, sw: [c,r] } | null
+        cratePos,                           // F43: [[c, r], ...] one crate per switch room
       };
     }
   }
@@ -504,7 +540,9 @@ function generateFallback(seed) {
   const spawn = absT(SPAWN_T, ROLE.spawn[0], ROLE.spawn[1]);
   const exit = absT(EXIT_POOL[0], ROLE.exit[0], ROLE.exit[1]);
   const hideSpots = ALL_ROOMS.map(([rc, rr]) => absT(HIDE_POOL[0], rc, rr));
-  return { map: m, paths, spawn, exit, hideSpots, seed, usedSeed: -1, containers: assigned.containers, questContainer: assigned.for_, camSw: placeCameraSwitch(m, CAM_ROOM), laserPos: placeLaser(m, LASER_ROOM), robotPos: placeRobot(m, ROBOT_ROOM) };
+  const camSw = placeCameraSwitch(m, CAM_ROOM);
+  const robotPos = placeRobot(m, ROBOT_ROOM);
+  return { map: m, paths, spawn, exit, hideSpots, seed, usedSeed: -1, containers: assigned.containers, questContainer: assigned.for_, camSw, laserPos: placeLaser(m, LASER_ROOM), robotPos, cratePos: crateRow(m, camSw, robotPos, assigned.containers) };
 }
 
 // ---------------- Wall edge table (for exact cone clipping) ----------------

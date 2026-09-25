@@ -76,7 +76,9 @@ const pin = (R) => { R.path = [{ x: R.x, y: R.y }]; R.wp = 0; R.pathTiles = []; 
   g.reset(42); state.gameOver = false;
   const R = state.guards.find((x) => x.robot);
   const sw = state.switches.find((s) => s.target.id === R.id);
-  g.flipSwitch(sw);   // power it off
+  // F43: power the robot off by occupying its plate (stand on it, one frame)
+  state.player.x = sw.x; state.player.y = sw.y;
+  g.update(1 / 60);   // stepSwitches activates it (held)
   const sx = R.x, sy = R.y;
   state.player.x = R.x + 15; state.player.y = R.y;
   R.facing = 0;

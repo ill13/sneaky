@@ -31,6 +31,11 @@ function stepPlayer(dt) {
   // update.js is the single source, also used by the direction-aware distract)
   const [mx, my] = heldMoveDir();
   if (mx || my) {
+    // F43: the push runs BEFORE the free-move - shove a crate one tile out of the
+    // way, then the player's collision slides them into the vacated space. A crate
+    // you can't push (far tile blocked, or you're not head-on on it) is solid.
+    const pushed = tryPushCrate(state.player, mx, my);
+    if (pushed) onCrateMoved(pushed);
     const len = Math.hypot(mx, my);
     const speed = statsFor('player').moveSpeed * (state.upgrades.stim ? UPG_STIM_MULT : 1) * (state.carrying ? CARRY_SPEED_MULT : 1);
     // Phase 1.3: the player free-moves through freeMove (movement.js), the shared

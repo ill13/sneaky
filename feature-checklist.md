@@ -1721,6 +1721,56 @@ objective is guarded by a moving sentinel.
 
 Full suite green: 22 headless, mobile 14/14, touch 13/13, playtest 35/35.
 
+### 0.22.0 - Crate + floor-plate switch (F43): shove, park, and the grace window
+
+A **crate** is a pushable, unbreakable, unsearchable solid tile. You shove it one square,
+straight on (walk into it head-on, no new button), and it stays where you leave it. It's
+solid for everything - the player's collision, the guards' A* pathing, and line of sight -
+folded into the shared blocked-tests, so it blocks movement, routing, and vision for free.
+Nudge-out is the push itself: a crate can always be shoved back along any clear direction, so
+it can never soft-lock you. One crate per switch room (the camera room E, the robot room H),
+deterministic, kept off the machine, its plate, the robot lane, and the containers.
+
+The **switch** is now a floor plate you occupy, not a button you press. While anything is ON
+it (you standing on its tile, or a crate parked on it) the machine is powered off and no
+timer runs. Clear it and a **grace window** (SWITCH_GRACE) keeps the machine down, then it
+re-arms; step back on to cancel the grace. A crate on a plate is the persistent version of
+stepping on it: the machine stays down for as long as the crate sits there, no timer.
+
+- [x] **The crate object (state.js `makeCrate`).** `{ c, r, x, y, homeC, homeR }` - a tile
+      with a remembered home (for a future restore behavior). Unbreakable, unsearchable: no
+      contents, no durability. `state.crates` array.
+- [x] **Solid integration (movement / sight / path).** `crateAt(c, r)` + `tileBlocked(c, r)`
+      in movement.js; `hitsWall` is crate-aware (player + guards collide), `hasLOS` is
+      crate-aware (vision blocks), `roomWalkable` is crate-aware (guards route around). One
+      predicate, three call sites.
+- [x] **The push (movement.js `tryPushCrate`).** Straight-on, pure-axis only: head-on with the
+      crate (same tile row/col, your edge at its near face), the far tile open (map + no other
+      crate) -> the crate advances one tile. Runs before the player's freeMove, so the player's
+      collision slides it into the vacated space (no clamping math).
+- [x] **The floor-plate switch (update.js `stepSwitches`).** Occupancy + grace: occupied
+      (player tile == switch tile, or a crate on it) = powered off, no timer; cleared =
+      grace countdown, then re-arm; re-occupy cancels the grace. Replaces the old latching
+      act-button flip (removed `switchTarget` / `flipSwitch` and the ACT-verb branch).
+- [x] **The guard reaction (update.js `onCrateMoved`).** A patrolling guard in the room
+      notices a crate shoved into its lane (a waypoint tile, or within 1.5 tiles): a one-time
+      stall (CRATE_STALL) + a dropped path, so it re-routes around the crate (roomPath is
+      crate-aware). Machines, sleepers, and anything already reacting are left alone.
+- [x] **Placement (mapgen.js `placeCrate` / `crateRow`).** One crate per switch room, off the
+      machine, its plate, the robot lane, and the room's containers. Gated by `TOOLS.crate`.
+- [x] **Visual (render.js).** A brown X-braced crate tile; the plate lamp is red (armed) /
+      cyan (down); a depleting cyan ring shows the grace window while the plate is down but
+      empty. No minimap marker (it's in-room furniture; the room is already fog-gated).
+- [x] **Tests (tools/test-crate.js, 18 checks).** Placement in E + H; solid (tileBlocked /
+      not walkable); head-on push moves one tile; a wall stops the push (and it DID move first);
+      blocks LOS (and a clear lane doesn't); a guard stalled by a shove; `TOOLS.crate` off
+      removes them; not a unit, not a container.
+- [x] **test-switch rewritten (14 checks).** Occupy = down (no timer); leave = grace running;
+      grace expires = re-arm; re-occupy cancels grace; a crate on the plate = down with no
+      timer; `TOOLS.camera` off removes the camera + its plate.
+
+Full suite green: 23 headless, clean browser boot (no JS errors), crate + plate render verified.
+
 ---
 
 ## Carryovers (open from before)
@@ -1756,6 +1806,8 @@ node tools/test-clue.js         # 0.17.0: the clue notes - A/B/C placement, bank
 node tools/test-debug.js        # 0.17.1: the G key banks every item (intent path)
 node tools/test-doors.js        # 0.17.3: opened keyed doors get the same lintel frame
 node tools/test-sleep.js        # 0.18.0: the sleeping guard (duty cycle) - schedule, blind, KO target, toggle
+node tools/test-switch.js       # 0.22.0: the floor-plate switch - occupancy + grace window (crate on plate, re-arm, cancel)
+node tools/test-crate.js        # 0.22.0: the pushable crate - solid, push, wall-stop, LOS block, guard stall, toggle
 node tools/sim-play.js          # headless winnability (stale bot; not a tuning signal)
 NODE_PATH=<your-playwright-install> node tools/check-touch.js  # 13 touch checks (4-way pad + Enter restart)
 NODE_PATH=<your-playwright-install> node tools/check-mobile.js # 14 mobile layout checks

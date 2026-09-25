@@ -29,7 +29,7 @@ function roomBounds(rc, rr) {
 function roomWalkable(rc, rr, c, r) {
   const b = roomBounds(rc, rr);
   if (c < b.c0 || c > b.c1 || r < b.r0 || r > b.r1) return false;
-  return state.map[r][c] === 0;
+  return state.map[r][c] === 0 && !crateAt(c, r);   // F43: a crate is not walkable (guards route around it)
 }
 
 // Nearest walkable tile of room (rc,rr) to a world point. This is the pursuit

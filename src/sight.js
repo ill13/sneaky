@@ -38,12 +38,13 @@ function hasLOS(x0, y0, x1, y1) {
   const tDeltaY = dy !== 0 ? TILE / Math.abs(uy) : Infinity;
   let guard = 0;
   while (guard++ < 512) {
-    if (solid(cx, cy, state.map)) return false;
+    if (solid(cx, cy, state.map) || crateAt(cx, cy)) return false;   // F43: a crate blocks sight
     const next = Math.min(tMaxX, tMaxY);
     if (next >= d) return true;           // the target lies before the next boundary
     // Threading a grid corner: block if either side cell is solid (no corner cutting).
     if (Math.abs(tMaxX - tMaxY) < 1.0) {
-      if (solid(cx + stepX, cy, state.map) || solid(cx, cy + stepY, state.map)) return false;
+      if (solid(cx + stepX, cy, state.map) || crateAt(cx + stepX, cy) ||
+          solid(cx, cy + stepY, state.map) || crateAt(cx, cy + stepY)) return false;
     }
     if (tMaxX < tMaxY) { cx += stepX; tMaxX += tDeltaX; }
     else { cy += stepY; tMaxY += tDeltaY; }

@@ -21,7 +21,8 @@ const state = {
   // holds a small `contents` list of item refs {role, id}; `opened` flips when
   // you finish searching it, `searchT` is the seconds accumulated this session.
   containers: [],
-  switches: [],          // F39: the power panels - [{ x, y, c, r, room, target, on }]
+  switches: [],          // F39: the power plates - [{ x, y, c, r, room, target, on, grace, wasHeld }]
+  crates: [],            // F43: the pushable crates - [{ c, r, x, y, homeC, homeR }]
   foundNotes: [],        // F33: the flavor-note texts you've read
   searching: null,       // F33: the container currently being searched (HUD progress)
   // F34: the clue system. `clues` maps a key id -> true once you've read the note
@@ -123,7 +124,19 @@ function makeSwitch(c, r, targetId) {
     x: (c + 0.5) * TILE, y: (r + 0.5) * TILE,
     room: roomAt(c, r),
     target: { kind: 'unit', id: targetId },
-    on: true,             // the machine is armed until flipped
+    on: true,             // F43: true = the machine is armed (powered on). Occupying the plate turns it off.
+    grace: 0,             // F43: the grace window (s) - runs while the plate is active but unoccupied
+    wasHeld: false,       // F43: previous frame's occupancy - drives the release -> grace transition
+  };
+}
+// F43: a pushable crate - a solid, unbreakable, unsearchable tile you shove one
+// square at a time. `homeC/homeR` is where it started (kept for a future restore
+// behavior; nudge-out today just means it can be pushed back in any clear direction).
+function makeCrate(c, r) {
+  return {
+    c, r,
+    x: (c + 0.5) * TILE, y: (r + 0.5) * TILE,
+    homeC: c, homeR: r,
   };
 }
 // F40: the laser (the industrial skin of the duty cycle). A stationary emitter that

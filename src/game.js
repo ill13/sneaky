@@ -68,8 +68,9 @@ function reset(seed) {
   // they must not shift the stride-rule indices (camera = 100, laser = 101).
   // F39: the camera (first machine) + its switch - the environmental-control
   // showcase. The camera is a machine (non-knockable, non-distractable); the
-  // switch is the ONLY way to power it off (latching). Placed on two free tiles
-  // in CAM_ROOM (the E hub). Gated by TOOLS.camera (the curation toggle).
+  // switch plate is the ONLY way to power it off (F43: occupy it, or park a crate
+  // on it, and it stays down; clear it and a grace window runs before it re-arms).
+  // Placed on two free tiles in CAM_ROOM (the E hub). Gated by TOOLS.camera.
   state.switches = [];
   if (TOOLS.camera && layout.camSw) {
     const [cc, cr] = layout.camSw.cam;
@@ -86,12 +87,16 @@ function reset(seed) {
   }
   // F42: the robot (the moving machine). A sentry that patrols the Vault lane with
   // a vision cone; a sustained look trips the alarm (not a hit). It never chases.
-  // Its switch stops it for the run (latching), like the camera. Gated by TOOLS.robot.
+  // Its switch plate stops it (F43: occupancy + grace), like the camera. Gated by TOOLS.robot.
   if (TOOLS.robot && layout.robotPos) {
     const robot = makeUnit('robot', 102, makeRobot(layout.robotPos.path));
     state.guards.push(robot);
     if (layout.robotPos.sw) state.switches.push(makeSwitch(layout.robotPos.sw[0], layout.robotPos.sw[1], robot.id));
   }
+  // F43: the pushable crates - one per switch room (E, H), solid + unbreakable +
+  // unsearchable. Shove them one tile; park one on a switch plate to hold the
+  // machine down. Gated by TOOLS.crate.
+  state.crates = (layout.cratePos || []).map(([c, r]) => makeCrate(c, r));
   state.units = [state.player, ...state.guards];   // Phase 1: single unit array, player first
   // hide spots (F23): one bin/closet per room, from the layout's seed-picked tiles
   state.hideSpots = (layout.hideSpots || []).map(([c, r]) =>

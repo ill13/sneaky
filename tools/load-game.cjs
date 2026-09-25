@@ -79,9 +79,10 @@ function loadGame() {
       tryAction, hideSpotNear, downGuardNear, wakeGuard, tryKnockout, canDistract, doDistract,
       actionContext, isKnockoutTarget, knockoutReady,   // F27: the contextual action
       searchTarget, stepSearch, openContainer, grantItem, doSearchNoise, grantAllItems,   // F33: hold-to-search containers + debug grant-all
-      switchTarget, flipSwitch, machineAlarm,   // F39: the switch (operates the machine) + the machine alarm (F40 shared)
+      stepSwitches, onCrateMoved, machineAlarm,   // F43: the floor-plate switch (occupancy + grace) + crate reaction + machine alarm
       roomAt, reachable, solid, generateFallback, mulberry32, validateKeyChain,   // F29: the multi-key solvability proof
-      makeCamera, makeSwitch, makeLaser, makeRobot,   // F39: camera + switch; F40: laser; F42: robot
+      crateAt, tileBlocked, tryPushCrate,   // F43: the pushable crate (solid + shove)
+      makeCamera, makeSwitch, makeLaser, makeRobot, makeCrate,   // F39: camera + switch; F40: laser; F42: robot; F43: crate
       KEYS, doorSecTiles, doorSecApproach,   // F29: the colored key/door table + helpers
       SOLUTION_PATH, UPG_TYPES, UPGRADES, WALL_PLAN, DEAD_ENDS,
       CONTAINER_TYPES, NOTE_TEXTS, UPG_ROOMS, OBJECTIVE, containersPerRoom,   // F33: container archetypes + item content
@@ -91,7 +92,7 @@ function loadGame() {
       DISTRACT_HEARING, DISTRACT_WALL_DIST, DISTRACT_FACE_COS, DISTRACT_COOLDOWN, DISTRACT_INVESTIGATE, HEAR_PAUSE,
       POST_STRIDE, POST_OFFSET, POST_SCAN_HOLD, POST_SWING,   // F28: post guards + body discovery
       SLEEP_ON, SLEEP_OFF, SLEEP_STRIDE, SLEEP_OFFSET, TOOLS,   // F38: the duty cycle (sleep) + tool toggles
-      CAM_FOV, CAM_LOCK, CAM_PAN_SPEED, CAM_PAN_RANGE, CAM_ROOM, SWITCH_RANGE,   // F39: the camera + its switch
+      CAM_FOV, CAM_LOCK, CAM_PAN_SPEED, CAM_PAN_RANGE, CAM_ROOM, SWITCH_GRACE, CRATE_STALL,   // F39: the camera; F43: switch grace + crate stall
       LASER_ROOM, LASER_ON, LASER_OFF, LASER_RANGE, BEAM_THICK,   // F40: the laser (duty-cycle industrial skin)
       ROBOT_ROOM, ROBOT_LOCK, ROBOT_PATTERN,   // F42: the robot (the moving machine)
       beamContact,   // F40: the laser beam contact test

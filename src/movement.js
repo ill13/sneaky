@@ -9,10 +9,25 @@
 //  feels exactly like the classic resolver. Uses the live state.map.
 // ============================================================
 
+// F43: the crate on tile (c,r), or null. Crates are solid - folded into the
+// collision, sight, and pathfinding blocked-tests so they block player / guards /
+// vision / A* for free (they're furniture that happens to move).
+function crateAt(c, r) {
+  for (const b of (state.crates || [])) if (b.c === c && b.r === r) return b;
+  return null;
+}
+// F43: is tile (c,r) blocked by map geometry OR a crate? The push's far-tile check
+// and the crate-solid tests share this one predicate.
+function tileBlocked(c, r) {
+  return solid(c, r, state.map) || !!crateAt(c, r);
+}
 // Collision footprint: the 8 corners + edge midpoints of a 2r x 2r box.
 function hitsWall(x, y, r) {
   const pts = [[-r, 0], [r, 0], [0, -r], [0, r], [-r, -r], [r, -r], [-r, r], [r, r]];
-  return pts.some(([ox, oy]) => solid(Math.floor((x + ox) / TILE), Math.floor((y + oy) / TILE), state.map));
+  return pts.some(([ox, oy]) => {
+    const c = Math.floor((x + ox) / TILE), rr = Math.floor((y + oy) / TILE);
+    return solid(c, rr, state.map) || !!crateAt(c, rr);
+  });
 }
 
 // Sub-step ceiling in px. A normal frame's delta is ~2.5px (player) / ~1.6px
@@ -40,6 +55,35 @@ function tryMove(u, dx, dy) {
 // axis, so "blocked" is simply "the held axis didn't move". `dx`/`dy` is this
 // tick's intended move; the escape nudge scales with it. A patrol unit does NOT
 // call this - it follows an A* path (followPath) and never free-steers.
+// F43: the push. A crate is shoveled one tile when you walk straight into it and
+// the tile beyond is clear. Runs BEFORE the player's freeMove, so the crate pops
+// out of the way and the player's normal collision then slides it forward into the
+// vacated space - no clamping math, tryMove does the follow. Straight-on only:
+// a pure-axis hold, head-on with the crate (same tile row/col), far tile open.
+// Returns the pushed crate (so the caller can fire the guard reaction) or null.
+function tryPushCrate(p, mx, my) {
+  const pc = Math.floor(p.x / TILE), pr = Math.floor(p.y / TILE);
+  const EPS = 1.5;   // px - how close your edge must be to the crate's face to push
+  let dir = null, crate = null, fc = 0, fr = 0;
+  if (mx > 0 && my === 0) { dir = [1, 0]; crate = crateAt(pc + 1, pr); fc = pc + 2; fr = pr; }
+  else if (mx < 0 && my === 0) { dir = [-1, 0]; crate = crateAt(pc - 1, pr); fc = pc - 2; fr = pr; }
+  else if (my > 0 && mx === 0) { dir = [0, 1]; crate = crateAt(pc, pr + 1); fc = pc; fr = pr + 2; }
+  else if (my < 0 && mx === 0) { dir = [0, -1]; crate = crateAt(pc, pr - 1); fc = pc; fr = pr - 2; }
+  if (!dir || !crate) return null;
+  // head-on: your edge must be at the crate's near face (same tile row/col is already true).
+  // the crate sits at (pc + dir[0], pr + dir[1]); its face toward you is the inner edge:
+  // right->(pc+1)*T, left->pc*T, down->(pr+1)*T, up->pr*T.
+  const faceX = (pc + dir[0] + (dir[0] > 0 ? 0 : 1)) * TILE;   // the crate's near face, x
+  const faceY = (pr + dir[1] + (dir[1] > 0 ? 0 : 1)) * TILE;   // the crate's near face, y
+  const atFaceX = dir[0] > 0 ? (p.x + p.r >= faceX - EPS) : dir[0] < 0 ? (p.x - p.r <= faceX + EPS) : true;
+  const atFaceY = dir[1] > 0 ? (p.y + p.r >= faceY - EPS) : dir[1] < 0 ? (p.y - p.r <= faceY + EPS) : true;
+  if (!atFaceX || !atFaceY) return null;
+  if (tileBlocked(fc, fr)) return null;   // the far tile is open (map + no other crate)
+  crate.c = fc; crate.r = fr;
+  crate.x = (fc + 0.5) * TILE; crate.y = (fr + 0.5) * TILE;
+  return crate;
+}
+
 function freeMove(unit, dx, dy) {
   const bpx = unit.x, bpy = unit.y;
   tryMove(unit, dx, dy);

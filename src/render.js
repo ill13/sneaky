@@ -432,7 +432,24 @@ function render() {
     }
   }
 
-  // ---- switches (F39): the power panels (the environmental-control operators) ----
+  // ---- crates (F43): the pushable wooden crates (solid, unbreakable, unsearchable) ----
+  for (const b of state.crates) {
+    const x = fx(b.c * TILE), y = fy(b.r * TILE);
+    ctx.fillStyle = '#8a5a2b';
+    ctx.fillRect(x + 2 * SCALE, y + 2 * SCALE, S - 4 * SCALE, S - 4 * SCALE);
+    ctx.strokeStyle = '#5a3a1a';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x + 2 * SCALE, y + 2 * SCALE, S - 4 * SCALE, S - 4 * SCALE);
+    // the X brace (reads as a crate, not a wall tile)
+    ctx.strokeStyle = '#6e4520';
+    ctx.lineWidth = 2 * SCALE;
+    ctx.beginPath();
+    ctx.moveTo(x + 3 * SCALE, y + 3 * SCALE); ctx.lineTo(x + S - 3 * SCALE, y + S - 3 * SCALE);
+    ctx.moveTo(x + S - 3 * SCALE, y + 3 * SCALE); ctx.lineTo(x + 3 * SCALE, y + S - 3 * SCALE);
+    ctx.stroke();
+  }
+
+  // ---- switches (F43): the floor plates (occupy to power the machine off) ----
   for (const sw of state.switches) {
     const x = fx(sw.x), y = fy(sw.y);
     const on = sw.on;
@@ -441,11 +458,20 @@ function render() {
     ctx.strokeStyle = on ? '#5a6478' : '#39414f';
     ctx.lineWidth = 2;
     ctx.strokeRect(x - 11 * SCALE, y - 11 * SCALE, 22 * SCALE, 22 * SCALE);
-    // the indicator lamp (red = the machine is armed) + the toggle lever
-    ctx.fillStyle = on ? '#ff5a5a' : '#3a4152';
+    // the indicator lamp (red = the machine is armed, cyan = it's down) + the toggle lever
+    ctx.fillStyle = on ? '#ff5a5a' : '#5ad9c0';
     ctx.beginPath(); ctx.arc(x, y - 5 * SCALE, 3 * SCALE, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = on ? '#8fd3ff' : '#5a6478';
     ctx.fillRect(x - 2 * SCALE, y, 4 * SCALE, 7 * SCALE);
+    // F43: the grace window - a depleting cyan ring while the plate is down but empty
+    if (!on && sw.grace > 0) {
+      const frac = Math.max(0, Math.min(1, sw.grace / SWITCH_GRACE));
+      ctx.strokeStyle = '#5ad9c0';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(x, y, 9 * SCALE, -Math.PI / 2, -Math.PI / 2 + frac * Math.PI * 2);
+      ctx.stroke();
+    }
   }
 
   // ---- door lintels (frames around every opening) ----

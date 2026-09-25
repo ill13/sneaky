@@ -129,7 +129,6 @@ function actionContext() {
   }
   if (knockoutReady()) return 'knockout';       // guard actions beat the wall-distract
   if (downGuardNear(p.x, p.y)) return 'grab';
-  if (switchTarget()) return 'switch';          // F39: standing on a power panel - operate it
   if (searchTarget()) return 'search';          // F33: facing an unsearched container
   if (canDistract(p.x, p.y, mdx, mdy) && state.distractCd <= 0) return 'distract';
   return null;
@@ -144,7 +143,6 @@ function tryAction() {
     const g = downGuardNear(p.x, p.y);
     state.carrying = g; g.x = p.x; g.y = p.y; return;
   }
-  if (v === 'switch') { flipSwitch(switchTarget()); return; }   // F39: flip the panel (latching)
   if (v === 'hide') {
     const spot = hideSpotNear(p.x, p.y);
     const g = state.carrying; state.carrying = null;
@@ -213,31 +211,41 @@ function searchTarget() {
   }
   return best;
 }
-// F39: the switch you're standing on / walking over (within SWITCH_RANGE), or
-// null. Pure - the HUD lights the ACT button from it too. No facing: a switch is
-// a floor plate you step to, not something you aim at. A flipped (off) switch is
-// inert.
-function switchTarget() {
-  const p = state.player;
-  let best = null, bd = SWITCH_RANGE;
+// F43: the switch is a floor plate you occupy, not a button you press. Ticked
+// once per frame. While the plate is OCCUPIED (you standing on its tile, or a crate
+// parked on it) the target machine is powered off and no timer runs. The moment it
+// clears, a grace window (SWITCH_GRACE) keeps it down, then it re-arms. Re-occupying
+// cancels the grace (back to fully active). One occupant per tile (player XOR crate).
+function stepSwitches(dt) {
+  const pc = Math.floor(state.player.x / TILE), pr = Math.floor(state.player.y / TILE);
   for (const sw of state.switches) {
-    if (!sw.on) continue;
-    const wx = sw.x - p.x, wy = sw.y - p.y;
-    const d = Math.hypot(wx, wy);
-    if (d > bd) continue;
-    bd = d; best = sw;
+    const held = (pc === sw.c && pr === sw.r) || !!crateAt(sw.c, sw.r);
+    const u = state.guards.find((x) => x.id === sw.target.id);
+    if (held) {
+      if (sw.on) { sw.on = false; if (u) u.disabled = true; state.flash = Math.max(state.flash, 0.15); state.distractFx = { x: sw.x, y: sw.y, t: 0 }; updateHUD(); }
+      sw.grace = 0;
+    } else if (!sw.on) {
+      if (sw.wasHeld) sw.grace = SWITCH_GRACE;   // just released - start the window
+      sw.grace -= dt;
+      if (sw.grace <= 0) { sw.on = true; if (u) u.disabled = false; updateHUD(); }
+    }
+    sw.wasHeld = held;
   }
-  return best;
 }
-// F39: flip a switch - latching (one-way). The target machine powers off for the
-// rest of the run. This is the ONLY way to stop a machine (non-knockable).
-function flipSwitch(sw) {
-  sw.on = false;
-  const u = state.guards.find((x) => x.id === sw.target.id);
-  if (u) u.disabled = true;
-  state.flash = Math.max(state.flash, 0.15);
-  state.distractFx = { x: sw.x, y: sw.y, t: 0 };   // the "click" ripple
-  updateHUD();
+// F43: a crate has been shoved - a patrolling guard in the room notices. The crate
+// is now in its lane (a waypoint tile it would walk) or right beside it, so it
+// stutters (one-time stall) and drops its path to re-route around it (roomPath is
+// crate-aware). Machines, sleepers, and anything already reacting are left alone.
+function onCrateMoved(b) {
+  const room = roomAt(b.c, b.r);
+  if (!room) return;
+  for (const g of state.guards) {
+    if (g.machine || g.asleep || g.state !== 'patrol') continue;
+    if (g.room[0] !== room[0] || g.room[1] !== room[1]) continue;
+    const onPath = g.pathTiles.some(([c, r]) => c === b.c && r === b.r);
+    const near = Math.hypot(g.x - b.x, g.y - b.y) < TILE * 1.5;
+    if (onPath || near) { g.pause = CRATE_STALL; g.pathTiles = []; }
+  }
 }
 // Accumulate search progress while you hold ACT on the target container. Called
 // every frame from the controller; opens it once the archetype's time is met.
@@ -339,6 +347,7 @@ function update(dt) {
   // act/distract, room-bound carried-body follow - are consumed by the controller
   // (src/controller.js stepPlayer). Input capture stays a pure emitter.
   stepPlayer(dt);
+  stepSwitches(dt);   // F43: the floor-plate switches (occupancy + grace window)
 
   // mark the room the player is standing in as remembered (minimap + reveal gate)
   const room = roomAt(Math.floor(state.player.x / TILE), Math.floor(state.player.y / TILE));
