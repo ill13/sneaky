@@ -1,28 +1,46 @@
 # SNEAK RUN
 
-A real-time, room-by-room stealth burner. The facility is a 3x3 grid of rooms; each
-room is its own little level. The three colored keys, the file, and the upgrades are
-hidden inside furniture - desks, cabinets, copiers, the safe. You don't know where
-the keys are yet: the notes left in the furniture name their rooms. Search the rooms
-up top, read what you find, and each room lights up on the minimap. Hold ACT on a
-container to search it, open the matching doors on the sealed bottom row, take the
-file, and reach the exit - without getting spotted. Silent quarter: no audio, no
-compass, no exact objective marker. The fog is the game.
+Real-time stealth, room by room. The facility is a 3x3 grid of rooms, and here's the
+thing: each room is its own little level, not one big open space. You solve a room,
+you move on. The three colored keys, the file, and the upgrades are all stuffed inside
+furniture - desks, cabinets, copiers, the safe - and you don't know where any of them
+are at the start. The notes you pull out of the furniture name the rooms for you. So
+the loop is: search the top rooms, read what you find, and each one lights up on the
+minimap as you go. Hold ACT on a container to search it, open the matching doors on the
+sealed bottom row, take the file, and reach the exit. Try not to get spotted doing any
+of it. Silent quarter, by the way: no audio, no compass, no exact objective marker. The
+fog is the game.
 
-Plain HTML/CSS/JS. Zero dependencies. No build step. Works from `file://` - open
-`index.html`. Mobile-first (portrait is the primary target), keyboard + gamepad +
-touch all supported.
+And it's built the way I like to build things - plain HTML/CSS/JS, zero dependencies,
+no build step. You open `index.html` from `file://` and it just runs. Nothing phones
+home, nothing's tracked, no cloud, no telemetry. [nothing leaves the device, ever -
+that's the design, not a feature I bolted on afterward] It's mobile-first (portrait is
+the primary target) with keyboard, gamepad, and touch all supported. I'm not here to
+impress you with a framework. I'm here to hand you a game that runs.
 
-**Play it live:** [https://ill13.github.io/sneaky/](https://ill13.github.io/sneaky/)
-(GitHub Pages, deployed from `main` - every push to `main` updates the live game.)
+**Play it live:** [https://ill13.github.io/sneaky/](https://ill13.github.io/sneaky/) -
+GitHub Pages, deployed from `main`. Every push to `main` updates the live game.
 
 ## Controls
-- Move: `WASD` / arrows / d-pad / gamepad left stick
-- Act (one contextual button): `E` / `Space` / pad X / pad Y / touch ACT. The verb comes from context, not the key: **knock out** an awake guard in your rear arc, **grab** a downed one, **hide** it at a bin (or **drop** it while your hands are full), **search** the furniture you're facing (hold it - a ring fills while you work), or **distract** the guards by pressing toward the wall you're flush against (the noise is the wall you're facing, so drifting along a wall never fires it). Guard actions always beat a distraction; carrying a body leaves your hands full.
-- Menu (`M`): restart, new seed, seed entry, help
-- Debug (`G`): bank every item at once - all three keys, the file, all three mods, and the clue knowledge (minimap lights up). Skips the collecting, not the run; doors still open on proximity. For tuning and playtest setup.
+
+- Move: `WASD` / arrows / d-pad / gamepad left stick.
+- Act - one contextual button: `E` / `Space` / pad X / pad Y / touch ACT. The verb comes
+  from context, not the key. Same button, different job depending on what's in front of
+  you: **knock out** an awake guard in your rear arc, **grab** a downed one, **hide** it
+  at a bin (or **drop** it when your hands are already full), **search** the furniture
+  you're facing (hold it - a ring fills while you work), or **distract** the guards by
+  pressing toward the wall you're flush against (the noise is the wall you're facing, so
+  sliding along a wall never fires it). A guard's own action always beats a distraction,
+  and carrying a body means your hands are full, full stop.
+- Menu (`M`): restart, new seed, seed entry, help.
+- Debug (`G`): banks every item at once - all three keys, the file, all three mods, and
+  the clue knowledge (the minimap lights up). It skips the collecting, not the run: the
+  doors still open on proximity. It's for tuning and setting up a playtest, not for
+  winning.
 
 ## Run the tests
+
+Keep them green. If one goes red, you broke something, and it will tell you which.
 ```
 node tools/test-gen.js        # map generation (density, reachability, solvability)
 node tools/test-cone.js       # vision cone / LOS math
@@ -39,16 +57,20 @@ node tools/test-action.js     # the contextual ACT button (knockout/grab/hide/di
 node tools/sim-play.js        # a deterministic, search-aware bot plays (a difficulty probe, not a tuning signal)
 node tools/replay.js [file]   # run a recorded intent stream headless (or the built-in demo)
 ```
-Playwright UI checks (need a debug Chrome on `:9222` + `NODE_PATH` pointing at your Playwright install; override the port with `CDP_URL`):
+Playwright UI checks (you'll need a debug Chrome on `:9222` and `NODE_PATH` pointed at
+your Playwright install; override the port with `CDP_URL`):
 ```
 node tools/check-mobile.js    # layout across portrait / landscape / desktop
 node tools/check-touch.js     # the touch input flow (menu, the ACT button)
 ```
 
 ## The source (`src/`)
-Flat classic scripts, shared global scope, loaded in dependency order (see
-`index.html` for the per-file responsibility notes). One responsibility per file;
-no file owns both rules and DOM.
+
+Flat classic scripts, shared global scope, loaded in dependency order - the per-file
+responsibility notes are in `index.html`. One job per file, and no file owns both the
+rules and the DOM. I went to school in the '70s, '80s, and '90s, so black boxes aren't
+something I just accept, and a file that's secretly three files is a black box by
+another name.
 
 | file | job |
 |---|---|
@@ -74,35 +96,40 @@ no file owns both rules and DOM.
 | `main.js` | boot, the main loop, the `__SNEAK` dev hooks |
 
 ## Design notes
+
 - **Rooms are levels.** A guard lives in one room and never crosses a door. When it
-  loses you it searches the last-seen tile (a door-edge if you're across the gap),
-  then returns to patrol. Doorways are gaps you can see through, but not a sight
-  line - a guard can't be activated by a glimpse through a doorway.
-- **Stats are data.** Every unit reads its row from `UNIT_TYPES` via
-  `statsFor(type)`. Adding a new unit type (a stronger guard, a VIP) is a data row +
-  spawn logic, not a new code path - see `tools/test-units.js`.
+  loses you it searches the last tile it saw you in (a door-edge if you're across the
+  gap), then goes back to patrol. Doorways are gaps you can see through, but they're not
+  a sight line - a guard can't be triggered by a glimpse through a doorway.
+- **Stats are data.** Every unit reads its row off `UNIT_TYPES` via `statsFor(type)`.
+  Adding a new unit - a meaner guard, a VIP - is a data row plus some spawn logic, not a
+  new code path. `tools/test-units.js` is the proof.
 - **The duty cycle.** A unit can carry a `duty: {on, off}` flag: awake `on`, asleep
-  `off`, repeating - and only honored in patrol (a guard chasing you never dozes). The
-  sleeping guard is its first face; the **laser** (F40) is its industrial skin - the same
-  flag drives a beam that blinks live/dormant. Tools are gated by `TOOLS` in `config.js`
-  (the demo is a kitchen sink; the narrative pass turns them off).
-- **Machines + switches (the fifth verb).** A machine is a data row with `machine: true`
-  - non-knockable, non-distractable. Three faces ship: the **camera** (scans a cone, trips
-  the **alarm** on a sustained look - stop it with its **switch**, a fixed single-tile
-  operator you step onto and tap, latching off), the **laser** (a beam that blinks live/dormant
-  on the duty cycle - touch the live beam and it trips the alarm; **no switch**, pure timing),
-  and the **robot** (a moving sentry that patrols a lane with a vision cone; a sustained look
-  trips the alarm, **no chase** - stop it with its switch). All three share `machineAlarm`
-  (an escalation, not a hit). Machines are pushed after the post/sleeper designation so they
+  `off`, repeating - and it's only honored in patrol (a guard chasing you never dozes).
+  The sleeping guard is its first face; the **laser** (F40) is its industrial skin - the
+  same flag drives a beam that blinks live/dormant. Every tool is gated by `TOOLS` in
+  `config.js` (the demo is a kitchen sink; the narrative pass turns them off).
+- **Machines + switches (the fifth verb).** A machine is a data row with
+  `machine: true` - you can't club it and you can't lure it. Three faces ship: the
+  **camera** (scans a cone, trips the **alarm** on a sustained look - stop it with its
+  **switch**, a fixed single-tile plate you step onto and tap, and it latches off), the
+  **laser** (a beam that blinks live/dormant on the duty cycle - touch the live beam and
+  it trips the alarm; **no switch**, it's pure timing), and the **robot** (a moving
+  sentry that patrols a lane with a vision cone; a sustained look trips the alarm,
+  **no chase** - stop it with its switch). All three run through `machineAlarm` (an
+  escalation, not a hit). Machines get pushed after the post/sleeper designation so they
   never shift the stride-rule indices.
 - **Deterministic.** The sim is a pure function of (seed, input stream). A* and the
-  guard AI are `Math.random`-free; only the seed drives the layout. The input stream
-  is plain/serializable, so a recorded run replays itself and the whole state
-  round-trips through JSON - the multiplayer/persistence foundation.
+  guard AI are `Math.random`-free; only the seed drives the layout. The input stream is
+  plain and serializable, so a recorded run replays itself and the whole state
+  round-trips through JSON. That's the multiplayer/persistence foundation, and honestly
+  it's why I trust this thing.
 - **Only A\*.** Pathfinding is A* in `src/path.js`. (`mapgen.js` has a separate
-  flood-fill, but that's a generation-time solvability check, not a unit pathfinder.)
+  flood-fill, but that's a generation-time solvability check, not a unit pathfinder.
+  Don't conflate the two.)
 
 ## Dev hooks
+
 `window.__SNEAK` exposes the state, `reset(seed)`, `replay(seed, frames, dt)`,
 `serialize()`, and a few test helpers (dump a body, force an act, set up a lure).
 Reproducible captures use seed `42`.
