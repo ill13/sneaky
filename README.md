@@ -13,6 +13,9 @@ Plain HTML/CSS/JS. Zero dependencies. No build step. Works from `file://` - open
 `index.html`. Mobile-first (portrait is the primary target), keyboard + gamepad +
 touch all supported.
 
+**Play it live:** [https://ill13.github.io/sneaky/](https://ill13.github.io/sneaky/)
+(GitHub Pages, deployed from `main` - every push to `main` updates the live game.)
+
 ## Controls
 - Move: `WASD` / arrows / d-pad / gamepad left stick
 - Act (one contextual button): `E` / `Space` / pad X / pad Y / touch ACT. The verb comes from context, not the key: **knock out** an awake guard in your rear arc, **grab** a downed one, **hide** it at a bin (or **drop** it while your hands are full), **search** the furniture you're facing (hold it - a ring fills while you work), or **distract** the guards by pressing toward the wall you're flush against (the noise is the wall you're facing, so drifting along a wall never fires it). Guard actions always beat a distraction; carrying a body leaves your hands full.
