@@ -81,6 +81,10 @@ no file owns both rules and DOM.
 - **Stats are data.** Every unit reads its row from `UNIT_TYPES` via
   `statsFor(type)`. Adding a new unit type (a stronger guard, a VIP) is a data row +
   spawn logic, not a new code path - see `tools/test-units.js`.
+- **The duty cycle.** A unit can carry a `duty: {on, off}` flag: awake `on`, asleep
+  `off`, repeating - and only honored in patrol (a guard chasing you never dozes). The
+  sleeping guard is its first face; a blinking laser is the same flag reskinned. Tools are
+  gated by `TOOLS` in `config.js` (the demo is a kitchen sink; the narrative pass turns them off).
 - **Deterministic.** The sim is a pure function of (seed, input stream). A* and the
   guard AI are `Math.random`-free; only the seed drives the layout. The input stream
   is plain/serializable, so a recorded run replays itself and the whole state

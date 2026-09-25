@@ -74,6 +74,7 @@ function guardSharesRoom(g) {
 // of play - its stale facing must never re-heat the alarm.
 function canSee(g, fov, range) {
   if (g.state === 'down' || g.state === 'dazed' || g.state === 'hidden') return false;
+  if (g.asleep) return false;   // F38: dozing - blind (asleep is only true in patrol)
   const dx = state.player.x - g.x, dy = state.player.y - g.y;
   const dist = Math.hypot(dx, dy);
   if (dist > range) return false;

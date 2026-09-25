@@ -32,7 +32,9 @@ ok(t1, 'T1: every unit has a valid type (statsFor resolves) + a unique id');
 // T2: exactly 1 player at units[0], 16 guards
 ok(U[0].type === 'player' && U.filter((u) => u.type === 'player').length === 1,
    'T2a: exactly one player, at units[0]');
-ok(U.filter((u) => u.type === 'guard').length === 16, 'T2b: exactly 16 guards');
+// F38: a guard-unit is a normal 'guard' OR a 'sleeper' (the same role, a dozing
+// variant). The count of guard-units stays 16; the type split is 12 + 4.
+ok(U.filter((u) => u.type === 'guard' || u.type === 'sleeper').length === 16, 'T2b: exactly 16 guard-units (guard + sleeper)');
 
 // T3: convenience refs agree with the single array
 ok(g.player() === U[0], 'T3a: state.player === state.units[0]');

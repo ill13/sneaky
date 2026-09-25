@@ -87,5 +87,10 @@ function makeGuard(path) {
     searchT: 0,                             // sec left in the search hold
     hearT: 0,                               // F25: sec left in the "heard it" freeze-and-turn
     hearAngle: 0,                           // F25: direction the guard swings to when it hears
+    // F38: the duty cycle (sleep). dutyT = seconds into the current phase; asleep
+    // flips when the phase runs out (only honored in patrol). Non-sleepers never
+    // flip it (tickDuty returns early), so asleep stays false for them.
+    dutyT: 0,
+    asleep: false,
   };
 }

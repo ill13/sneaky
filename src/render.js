@@ -257,7 +257,7 @@ function drawMinimap(t, range) {
     if (!rm || !roomRemembered(rm[0], rm[1])) continue;
     const gx = MX + (g.x / TILE) * MINI, gy = MY + (g.y / TILE) * MINI;
     const chasing = g.state === 'chase' || g.state === 'search' || g.state === 'hear';
-    if (hasUpg) {
+    if (hasUpg && !g.asleep) {   // F38: a dozing guard isn't looking - no cone
       const fov = chasing ? statsFor(g.type).chaseFov : statsFor(g.type).patrolFov;
       const [ox, oy] = roomOrigin(rm[0], rm[1]);
       ctx.save();
@@ -500,6 +500,7 @@ function render() {
   for (const g of state.guards) {
     if (g.state === 'hidden') continue;   // in a bin (F23): drawn as the bin, not a guard
     const down = g.state === 'down';
+    const asleep = g.asleep && !down && !g.post;   // F38: dozing (blind, stationary)
     const wob = g.state === 'dazed' ? Math.sin(t * 20) * 2 : 0;
     const carried = state.carrying === g;   // dragged behind you (F23)
     const gx = fx(g.x + wob), gy = fy(g.y + (carried ? 13 : 0));
@@ -512,6 +513,7 @@ function render() {
       ctx.fillRect(gx - bs, gy - bs, bs * 2, bs * 2);
     }
     ctx.fillStyle = down ? '#39415a'
+      : asleep ? '#5c6d90'   // F38: dim, dozing
       : g.state === 'chase' ? (state.alarmTime > 0 ? '#ff7828' : '#ff5252')
       : g.state === 'search' ? '#e0913a'
       : g.state === 'hear' ? '#d9862f'
@@ -528,6 +530,12 @@ function render() {
         ctx.lineTo(gx + s * 5 * SCALE - 3 * SCALE, gy + 3 * SCALE);
         ctx.stroke();
       }
+    } else if (asleep) {
+      // F38: dozing - a soft "z" above, no facing arrow (it's not looking)
+      ctx.fillStyle = 'rgba(184, 198, 228, 0.85)';
+      ctx.font = 'bold ' + Math.round(12 * SCALE) + 'px ' + FONT;
+      ctx.textAlign = 'center';
+      ctx.fillText('z', gx, gy - g.r * SCALE - 6);
     } else {
       // facing arrow: bigger + clearer so the guard's gaze reads at phone scale
       // (the readable-clue that stands in for the retired in-room cone)

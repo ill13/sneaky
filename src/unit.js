@@ -41,6 +41,19 @@ const UNIT_TYPES = {
     chaseFov: CHASE_FOV,
     moveType: 'patrol',
   },
+  // F38: the sleeping guard - a normal guard plus the duty-cycle timing flag. It
+  // dozes on its patrol round (SLEEP_ON awake / SLEEP_OFF asleep), blind and
+  // stationary while down. A future laser is the same `duty` flag, reskinned.
+  sleeper: {
+    radius: 10,
+    moveSpeed: PATROL_SPEED,
+    chaseSpeed: CHASE_SPEED,
+    sightDist: VISION_RANGE,
+    patrolFov: PATROL_FOV,
+    chaseFov: CHASE_FOV,
+    moveType: 'patrol',
+    duty: { on: SLEEP_ON, off: SLEEP_OFF },
+  },
 };
 
 // Stats lookup: type -> its table row. One source of truth for render + rules.

@@ -74,7 +74,7 @@ function loadGame() {
       // lower-level helpers + constants for the unit tests
       TILE, COLS, ROWS,
       buildWallEdges, conePoly, raySeg, hasLOS, canSee, guardSharesRoom, angleDiff, hitsWall, tryMove, freeMove,
-      resumePatrol, enterChase, roomPath, followPath, stepGuard, angleTo,   // src/ai.js: the guard AI state machine
+      resumePatrol, enterChase, roomPath, followPath, stepGuard, angleTo, tickDuty,   // src/ai.js: the guard AI state machine (+F38 duty cycle)
       AStar, PATH, roomBounds, roomWalkable, nearestFloorTile,   // src/path.js: the A* pathfinder
       tryAction, hideSpotNear, downGuardNear, wakeGuard, tryKnockout, canDistract, doDistract,
       actionContext, isKnockoutTarget, knockoutReady,   // F27: the contextual action
@@ -88,6 +88,7 @@ function loadGame() {
       CARRY_SPEED_MULT, GRAB_DIST, HIDE_DIST, KO_TIME, DAZE_TIME, WAKE_SPOT_DIST, WAKE_DISCOVER_DIST,
       DISTRACT_HEARING, DISTRACT_WALL_DIST, DISTRACT_FACE_COS, DISTRACT_COOLDOWN, DISTRACT_INVESTIGATE, HEAR_PAUSE,
       POST_STRIDE, POST_OFFSET, POST_SCAN_HOLD, POST_SWING,   // F28: post guards + body discovery
+      SLEEP_ON, SLEEP_OFF, SLEEP_STRIDE, SLEEP_OFFSET, TOOLS,   // F38: the duty cycle (sleep) + tool toggles
       SEARCH_TIME, ALARM_SPEED_MULT, ALARM_RANGE_MULT, ALARM_PATROL_SPEED_MULT, ALARM_SEARCH_MULT, ALARM_DURATION,   // F31: alarm scaling
       runReplay,                                            // src/replay.js: deterministic replay driver
     };

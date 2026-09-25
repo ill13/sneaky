@@ -62,6 +62,7 @@ function reset(seed) {
   // swings, in 90-degree steps) instead of patrolling the lane.
   state.guards.forEach((g, i) => {
     if (i % POST_STRIDE === POST_OFFSET) { g.post = true; g.postBase = 0; g.postStep = 0; g.postT = 0; }
+    else if (TOOLS.sleep && i % SLEEP_STRIDE === SLEEP_OFFSET) g.type = 'sleeper';   // F38: dozes on its round
   });
   state.units = [state.player, ...state.guards];   // Phase 1: single unit array, player first
   // hide spots (F23): one bin/closet per room, from the layout's seed-picked tiles

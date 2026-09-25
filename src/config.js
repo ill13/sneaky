@@ -3,7 +3,7 @@
 //  Every knob in one place. Pure constants, no logic.
 //  Classic script: loads first, all names shared globally.
 // ============================================================
-const VERSION = '0.17.3';   // increment on any shipped change; shown next to the title
+const VERSION = '0.18.0';   // increment on any shipped change; shown next to the title
 
 const TILE = 32;
 // 3 x 3 grid of rooms: 3*16 + 2 inner walls + 2 outer = 52 cols,
@@ -99,3 +99,18 @@ const POST_STRIDE = 5;
 const POST_OFFSET = 2;
 const POST_SCAN_HOLD = 1.6;   // sec a post guard holds each cardinal direction
 const POST_SWING = 14;        // rad/sec - how fast its head whips to the next 90 deg
+// F38: the duty cycle - the shared "timing" unit flag. A unit with a duty is awake
+// for SLEEP_ON sec, asleep for SLEEP_OFF sec, repeating. The sleeping guard is its
+// first face (the corporate skin); a blinking laser is the same flag reskinned for
+// an industrial theme. Sleep only applies in patrol (a guard chasing you stays
+// alert). Guard index i is a sleeper when i % SLEEP_STRIDE === SLEEP_OFFSET.
+const SLEEP_ON = 4.0;         // sec a sleeping guard stays awake
+const SLEEP_OFF = 3.0;        // sec it dozes
+const SLEEP_STRIDE = 4;
+const SLEEP_OFFSET = 1;
+// F38: the tool toggles. The demo is a kitchen sink (all on); turning a tool off
+// is the curation step for the narrative pass. The generator honors these, so a
+// tool is added/removed without touching the rules.
+const TOOLS = {
+  sleep: true,   // F38: sleeping guards (the duty-cycle timing axis)
+};

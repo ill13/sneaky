@@ -1564,6 +1564,37 @@ Full suite green: 18 headless, mobile 14/14, touch 13/13, playtest 35/35.
 
 ---
 
+### 0.18.0 - Sleeping guards (F38): the first face of the duty cycle
+
+The environmental-control pass starts with the shared "timing" flag. A **duty cycle** is a
+unit property: awake for SLEEP_ON, asleep for SLEEP_OFF, repeating. The **sleeping guard** is
+its first face (the corporate skin); a blinking laser is the same flag reskinned for an
+industrial theme. It adds the timing axis the room puzzles have been missing - you can cross a
+doizing guard blind, but linger too long and it wakes on you.
+
+- [x] **A new `sleeper` unit row (unit.js).** Identical stats to a normal guard, plus
+      `duty: {on, off}`. Data-driven, no bespoke path.
+- [x] **The tick (ai.js `tickDuty` + state.js `dutyT`/`asleep`).** Runs **only in patrol** -
+      a guard chasing you never dozes (the timer is paused out of patrol). Awake SLEEP_ON,
+      asleep SLEEP_OFF, then repeat.
+- [x] **Blind + stationary while down (sight.js + ai.js).** `canSee` returns false for a
+      dozing guard and the patrol step returns early, so it holds in place and sees nothing.
+- [x] **A valid knockout target.** It's in patrol, so the rear-arc knockout still reaches it
+      (you can put a dozing guard down for good).
+- [x] **The toggle (config.js `TOOLS.sleep`).** The demo is a kitchen sink (all on); turning a
+      tool off is the curation step for the narrative pass. Guard index i is a sleeper when
+      `i % SLEEP_STRIDE === SLEEP_OFFSET`, never a post guard.
+- [x] **Visual (render.js).** A dozing guard renders as a dim body with a soft "z" and no
+      facing arrow; its minimap cone is suppressed while it sleeps.
+- [x] **Tests (tools/test-sleep.js, 13 checks).** Stride count + no post overlap; the cycle
+      flips on schedule (4s/3s); the same player seen awake vs blind asleep; stationary across
+      frames; a normal guard never dozes; a dozing guard is a knockout target; a chasing guard
+      never dozes; `TOOLS.sleep` off removes the sleepers.
+
+Full suite green: 19 headless, mobile 14/14, touch 13/13, playtest 35/35.
+
+---
+
 ## Carryovers (open from before)
 
 - [x] **C1. Dead root `game.js`** (25KB monolith, unused since the refactor): archived to `.ill13/game.js` in the F7 pass. Root is clean.
@@ -1596,6 +1627,7 @@ node tools/test-theme.js        # 0.16.0: theme-swap proof - core reads roles/ar
 node tools/test-clue.js         # 0.17.0: the clue notes - A/B/C placement, bank on search, full chain
 node tools/test-debug.js        # 0.17.1: the G key banks every item (intent path)
 node tools/test-doors.js        # 0.17.3: opened keyed doors get the same lintel frame
+node tools/test-sleep.js        # 0.18.0: the sleeping guard (duty cycle) - schedule, blind, KO target, toggle
 node tools/sim-play.js          # headless winnability (stale bot; not a tuning signal)
 NODE_PATH=<your-playwright-install> node tools/check-touch.js  # 13 touch checks (4-way pad + Enter restart)
 NODE_PATH=<your-playwright-install> node tools/check-mobile.js # 14 mobile layout checks

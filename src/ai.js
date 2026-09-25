@@ -90,6 +90,18 @@ function wakeBody(g, wakerX, wakerY) {
   g.facing = Math.atan2(wakerY - g.y, wakerX - g.x);
 }
 
+// F38: advance a unit's duty cycle (the shared "timing" flag). A unit with no
+// duty (a normal guard, the player) is untouched. A sleeper dozes on its patrol
+// round: awake for duty.on, asleep for duty.off, flipping g.asleep. Ticked only
+// in patrol, so a guard that's chasing you never falls asleep mid-pursuit.
+function tickDuty(g, dt) {
+  const duty = statsFor(g.type).duty;
+  if (!duty) return;
+  g.dutyT += dt;
+  const dur = g.asleep ? duty.off : duty.on;
+  if (g.dutyT >= dur) { g.dutyT -= dur; g.asleep = !g.asleep; }
+}
+
 // One guard's AI step (Phase 6.2): the room-confined state machine, extracted
 // from update()'s guard loop into a named rule so the AI is a testable unit.
 // Behavior is byte-identical to the loop body it came from. It reaches motion /
@@ -152,6 +164,10 @@ function stepGuard(g, dt) {
     return;
   }
 
+  // F38: the duty cycle (sleep) - sleepers only, and only in patrol (a guard
+  // chasing you stays alert). Ticked before `sees` so vision reflects the state.
+  if (g.state === 'patrol') tickDuty(g, dt);
+
   const s = statsFor(g.type);
   const sees = canSee(g, g.state === 'patrol' ? s.patrolFov : s.chaseFov, visionRangeFor(s));
 
@@ -169,6 +185,7 @@ function stepGuard(g, dt) {
   }
 
   if (g.state === 'patrol') {
+    if (g.asleep) return;   // F38: dozing in place - stationary + blind (canSee is false)
     if (sees) {
       enterChase(g);
     } else if (g.pause > 0) {
