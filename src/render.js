@@ -256,6 +256,11 @@ function drawMinimap(t, range) {
     const rm = roomAt(Math.floor(g.x / TILE), Math.floor(g.y / TILE));
     if (!rm || !roomRemembered(rm[0], rm[1])) continue;
     const gx = MX + (g.x / TILE) * MINI, gy = MY + (g.y / TILE) * MINI;
+    if (g.camera) {   // F39: a machine - a small square, red when armed, gray when off
+      ctx.fillStyle = g.disabled ? '#5a6478' : '#ff5a5a';
+      ctx.fillRect(gx - 2, gy - 2, 4, 4);
+      continue;
+    }
     const chasing = g.state === 'chase' || g.state === 'search' || g.state === 'hear';
     if (hasUpg && !g.asleep) {   // F38: a dozing guard isn't looking - no cone
       const fov = chasing ? statsFor(g.type).chaseFov : statsFor(g.type).patrolFov;
@@ -307,6 +312,13 @@ function drawMinimap(t, range) {
     if (!rm || !roomRemembered(rm[0], rm[1])) continue;
     ctx.fillStyle = s.occupied ? 'rgba(120, 140, 170, 0.55)' : 'rgba(143, 211, 255, 0.5)';
     ctx.fillRect(MX + s.c * MINI - 1, MY + s.r * MINI - 1, 2.5, 2.5);
+  }
+  // F39: the switches - a small cyan marker (the environmental-control operator)
+  for (const sw of state.switches) {
+    const rm = roomAt(Math.floor(sw.x / TILE), Math.floor(sw.y / TILE));
+    if (!rm || !roomRemembered(rm[0], rm[1])) continue;
+    ctx.fillStyle = sw.on ? '#8fd3ff' : '#3a4152';
+    ctx.fillRect(MX + (sw.x / TILE) * MINI - 1.5, MY + (sw.y / TILE) * MINI - 1.5, 3, 3);
   }
 }
 
@@ -404,6 +416,22 @@ function render() {
       ctx.arc(cx, cy, S / 2 - 1 * SCALE, -Math.PI / 2, -Math.PI / 2 + frac * Math.PI * 2);
       ctx.stroke();
     }
+  }
+
+  // ---- switches (F39): the power panels (the environmental-control operators) ----
+  for (const sw of state.switches) {
+    const x = fx(sw.x), y = fy(sw.y);
+    const on = sw.on;
+    ctx.fillStyle = on ? '#1a2230' : '#141821';
+    ctx.fillRect(x - 11 * SCALE, y - 11 * SCALE, 22 * SCALE, 22 * SCALE);
+    ctx.strokeStyle = on ? '#5a6478' : '#39414f';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x - 11 * SCALE, y - 11 * SCALE, 22 * SCALE, 22 * SCALE);
+    // the indicator lamp (red = the machine is armed) + the toggle lever
+    ctx.fillStyle = on ? '#ff5a5a' : '#3a4152';
+    ctx.beginPath(); ctx.arc(x, y - 5 * SCALE, 3 * SCALE, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = on ? '#8fd3ff' : '#5a6478';
+    ctx.fillRect(x - 2 * SCALE, y, 4 * SCALE, 7 * SCALE);
   }
 
   // ---- door lintels (frames around every opening) ----
@@ -505,6 +533,24 @@ function render() {
     const carried = state.carrying === g;   // dragged behind you (F23)
     const gx = fx(g.x + wob), gy = fy(g.y + (carried ? 13 : 0));
     const rr = g.r * SCALE;
+    if (g.camera) {
+      // F39: a floor sensor - a small base with a lens that tracks its facing.
+      // Dim + no beam when disabled (powered off by the switch).
+      const off = g.disabled;
+      if (!off) drawCone(g, range);   // the active beam, clipped to the room
+      ctx.fillStyle = off ? '#262c38' : '#39414f';
+      ctx.fillRect(gx - rr, gy - rr, rr * 2, rr * 2);
+      ctx.strokeStyle = off ? '#3a4152' : '#5a6478';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(gx - rr, gy - rr, rr * 2, rr * 2);
+      ctx.save();
+      ctx.translate(gx, gy);
+      ctx.rotate(g.facing);
+      ctx.fillStyle = off ? '#4a5262' : '#ff5a5a';   // the lens: red when armed
+      ctx.beginPath(); ctx.moveTo(rr + 5 * SCALE, 0); ctx.lineTo(2 * SCALE, -4 * SCALE); ctx.lineTo(2 * SCALE, 4 * SCALE); ctx.closePath(); ctx.fill();
+      ctx.restore();
+      continue;   // a machine is not a guard body
+    }
     if (g.post && !down) {
       // a fixed sentry (F28): a small pedestal marks the post it's stuck to - its
       // head still swings, so the facing arrow on top rotates over the base
@@ -560,6 +606,13 @@ function render() {
     if (g.state !== 'chase' && g.state !== 'search' && g.state !== 'hear') continue;
     const seeing = canSee(g, statsFor(g.type).chaseFov, range);
     ctx.fillStyle = seeing ? '#ff5252' : (g.state === 'hear' ? '#ffc46b' : '#ffd65a');
+    ctx.fillText('!', fx(g.x), fy(g.y) - g.r * SCALE - 7);
+  }
+  // F39: a camera that's looking at you (its detection fuse is charging) flashes a "!"
+  ctx.font = 'bold 13px ' + FONT;
+  for (const g of state.guards) {
+    if (!g.camera || g.disabled || g.seenFor <= 0) continue;
+    ctx.fillStyle = g.seenFor > CAM_LOCK * 0.6 ? '#ff5252' : '#ffd65a';
     ctx.fillText('!', fx(g.x), fy(g.y) - g.r * SCALE - 7);
   }
   // ---- pre-spot "?": a patrol guard turning your way (in range, LOS) - a beat ----

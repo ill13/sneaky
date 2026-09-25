@@ -131,6 +131,21 @@ function stepGuard(g, dt) {
     return;
   }
 
+  // F39: a camera (machine) - stationary, scans its cone, accumulates a
+  // detection fuse, and trips the alarm when it locks on. Disabled (by the
+  // switch) it's powered off: no vision, no threat. Machines never chase.
+  if (g.camera) {
+    if (g.disabled) { g.seenFor = 0; return; }
+    g.camT += dt;
+    g.facing = g.camBase + Math.sin(g.camT * CAM_PAN_SPEED) * CAM_PAN_RANGE;
+    const cs = statsFor(g.type);
+    if (canSee(g, cs.patrolFov, visionRangeFor(cs))) {
+      g.seenFor += dt;
+      if (g.seenFor >= CAM_LOCK) { g.seenFor = 0; cameraAlarm(g); }
+    } else g.seenFor = 0;
+    return;
+  }
+
   // F28: post guard - stuck at its post, only its head turns. It swings through
   // the four cardinal directions in 90-degree steps, holding each, to monitor
   // the room. It sees you (the alarm re-heat reads canSee) and can tag you if

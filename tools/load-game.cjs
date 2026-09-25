@@ -79,7 +79,9 @@ function loadGame() {
       tryAction, hideSpotNear, downGuardNear, wakeGuard, tryKnockout, canDistract, doDistract,
       actionContext, isKnockoutTarget, knockoutReady,   // F27: the contextual action
       searchTarget, stepSearch, openContainer, grantItem, doSearchNoise, grantAllItems,   // F33: hold-to-search containers + debug grant-all
+      switchTarget, flipSwitch, cameraAlarm,   // F39: the switch (operates the machine) + the machine alarm
       roomAt, reachable, solid, generateFallback, mulberry32, validateKeyChain,   // F29: the multi-key solvability proof
+      makeCamera, makeSwitch,   // F39: the camera (machine) + its switch
       KEYS, doorSecTiles, doorSecApproach,   // F29: the colored key/door table + helpers
       SOLUTION_PATH, UPG_TYPES, UPGRADES, WALL_PLAN, DEAD_ENDS,
       CONTAINER_TYPES, NOTE_TEXTS, UPG_ROOMS, OBJECTIVE, containersPerRoom,   // F33: container archetypes + item content
@@ -89,6 +91,7 @@ function loadGame() {
       DISTRACT_HEARING, DISTRACT_WALL_DIST, DISTRACT_FACE_COS, DISTRACT_COOLDOWN, DISTRACT_INVESTIGATE, HEAR_PAUSE,
       POST_STRIDE, POST_OFFSET, POST_SCAN_HOLD, POST_SWING,   // F28: post guards + body discovery
       SLEEP_ON, SLEEP_OFF, SLEEP_STRIDE, SLEEP_OFFSET, TOOLS,   // F38: the duty cycle (sleep) + tool toggles
+      CAM_FOV, CAM_LOCK, CAM_PAN_SPEED, CAM_PAN_RANGE, CAM_ROOM, SWITCH_RANGE,   // F39: the camera + its switch
       SEARCH_TIME, ALARM_SPEED_MULT, ALARM_RANGE_MULT, ALARM_PATROL_SPEED_MULT, ALARM_SEARCH_MULT, ALARM_DURATION,   // F31: alarm scaling
       runReplay,                                            // src/replay.js: deterministic replay driver
     };

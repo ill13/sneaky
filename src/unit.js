@@ -54,6 +54,19 @@ const UNIT_TYPES = {
     moveType: 'patrol',
     duty: { on: SLEEP_ON, off: SLEEP_OFF },
   },
+  // F39: the camera (the first machine). A stationary floor sensor - no patrol
+  // path, no speed. It scans its cone, and a sustained look trips the alarm.
+  // Non-knockable, non-distractable: the switch is the only way to stop it.
+  camera: {
+    radius: 9,
+    moveSpeed: 0,
+    chaseSpeed: 0,
+    sightDist: VISION_RANGE,
+    patrolFov: CAM_FOV,
+    chaseFov: CAM_FOV,
+    moveType: 'machine',
+    machine: true,   // can't be clubbed / lured / woken - the switch is its kill
+  },
 };
 
 // Stats lookup: type -> its table row. One source of truth for render + rules.

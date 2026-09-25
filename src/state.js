@@ -21,6 +21,7 @@ const state = {
   // holds a small `contents` list of item refs {role, id}; `opened` flips when
   // you finish searching it, `searchT` is the seconds accumulated this session.
   containers: [],
+  switches: [],          // F39: the power panels - [{ x, y, c, r, room, target, on }]
   foundNotes: [],        // F33: the flavor-note texts you've read
   searching: null,       // F33: the container currently being searched (HUD progress)
   // F34: the clue system. `clues` maps a key id -> true once you've read the note
@@ -92,5 +93,36 @@ function makeGuard(path) {
     // flip it (tickDuty returns early), so asleep stays false for them.
     dutyT: 0,
     asleep: false,
+  };
+}
+// F39: the camera (the first machine). A stationary floor sensor: no patrol
+// path, no speed. It scans its cone (camBase +/- a sine sweep), accumulates a
+// detection fuse (seenFor), and a machine (knockable/lureable = false). Its id
+// is the switch's target.
+function makeCamera(c, r, facing) {
+  const x = (c + 0.5) * TILE, y = (r + 0.5) * TILE;
+  return {
+    x, y,
+    facing,
+    state: 'patrol',
+    room: roomAt(c, r),
+    camera: true,        // render as a machine
+    machine: true,        // non-knockable, non-distractable (the switch is its kill)
+    disabled: false,      // flipped off by the switch
+    seenFor: 0,           // the detection fuse (sec of sustained line-of-sight)
+    camT: 0,              // the lens sweep phase
+    camBase: facing,      // the center of the sweep arc
+  };
+}
+// F39: a switch (power panel). A fixed interactable that, when operated (face it
+// + ACT), disables its target machine (latching - one-way, stays off). Machines-
+// only, so `target` is always a unit id.
+function makeSwitch(c, r, targetId) {
+  return {
+    c, r,
+    x: (c + 0.5) * TILE, y: (r + 0.5) * TILE,
+    room: roomAt(c, r),
+    target: { kind: 'unit', id: targetId },
+    on: true,             // the machine is armed until flipped
   };
 }

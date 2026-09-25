@@ -55,12 +55,13 @@
               <li>One <b>ACT</b> button does it all by context: behind a guard you <b>knock</b> it out for 10s; next to a downed one you <b>grab</b> it and carry it to a bin to <b>hide</b> it; pressed toward a wall you <b>distract</b> the guards in the room - the noise is the wall you're facing, and they'll walk over to investigate (they can't hear through doors, and a guard already chasing you won't break off); held against a <b>piece of furniture</b> you <b>search</b> it. Guard actions always beat a distraction, and carrying a body leaves your hands full - you can only hide it or drop it.</li>
               <li>Some guards are <b>stuck at a post</b> (watch for the pedestal) - only their head turns, in 90-degree steps. Cross when the gaze swings away, or get behind it and knock it out. And a body left in the open gets <b>found and shaken awake</b> by a passing guard, so get it to a bin fast.</li>
               <li>Some guards are <b>dozing</b> (a dim body with a <b>z</b>) - they're blind and standing still, so you can cross them safely, but they wake on a timer, so don't linger in front of them. Get behind a dozing one and you can knock it out like any other.</li>
+              <li>The <b>camera</b> (a floor sensor with a sweeping red beam) watches the hub room. It can't be knocked out or lured, and it trips the <b>ALARM</b> if it holds you in its beam. The only way to stop it is its <b>switch</b> - the panel with the red lamp in the same room. Face the panel and press <b>ACT</b> and it powers the camera off for good. Kill the sensor, then cross.</li>
               <li>The map is a loop with a detour: the file is deep, the exit is a full sweep back. Dead-end rooms off the path hold <b>UPGRADES</b> (V speed, H hush, W weight) - tucked in a piece of furniture to search. Exploring costs time, and it pays out for the rest of the run.</li>
             </ol>
             <div class="intro-side">
               <table class="intro-keys">
                 <tr><td>Move</td><td>WASD / arrows</td><td>stick / dpad</td><td>4-way pad</td></tr>
-                <tr><td>Act (knockout / grab / hide / distract / search)</td><td>E / Space</td><td>X / Y</td><td>ACT</td></tr>
+                <tr><td>Act (knockout / grab / hide / distract / search / switch)</td><td>E / Space</td><td>X / Y</td><td>ACT</td></tr>
                 <tr><td>Menu (seed / retry)</td><td>M</td><td>-</td><td>&#9776;</td></tr>
                 <tr><td class="dbg-key">Debug: bank every item</td><td>G</td><td>-</td><td>-</td></tr>
               </table>
@@ -78,7 +79,7 @@
           <button type="button" class="dpad-btn" id="dpad-down" aria-label="Move down">&#9660;</button>
         </div>
         <div id="touch-btns">
-          <button type="button" id="btn-act" title="Act: knock out a guard, grab/hide a body, or distract from a wall - the context decides">ACT</button>
+          <button type="button" id="btn-act" title="Act: knock out a guard, grab/hide a body, distract from a wall, search furniture, or flip a switch - the context decides">ACT</button>
         </div>
       </div>
     </div>

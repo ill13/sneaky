@@ -1593,6 +1593,46 @@ doizing guard blind, but linger too long and it wakes on you.
 
 Full suite green: 19 headless, mobile 14/14, touch 13/13, playtest 35/35.
 
+### 0.19.0 - Camera + switch (F39): the "operate the environment" verb
+
+The fifth core verb. A **camera** is the first *machine*: a stationary floor sensor that
+scans its cone and, on a sustained look (CAM_LOCK), trips the **alarm** - not a hit, an
+escalation (the forgiving grace model). A machine can't be knocked out or lured; the only
+way to stop it is its **switch**. A switch is a fixed, single-tile operator you face and
+tap: flip it and the target powers off for the rest of the run (latching). The camera +
+its switch live in the E hub (CAM_ROOM), the room you traverse twice - cross the room
+*after* you kill the sensor, or take the alarm. This is "the room is a circuit."
+
+- [x] **A new `camera` unit row (unit.js).** `moveSpeed 0`, `machine: true`,
+      non-knockable, non-distractable. A data row, not a bespoke path.
+- [x] **The switch (state.js `makeSwitch` + `state.switches`).** `target = {kind:'unit', id}`
+      - machines-only (a key stays the only macro door tool). Latching: once off, stays off.
+- [x] **The camera's step (ai.js).** Stationary; its lens sweeps `camBase +/- a sine arc`.
+      Sustained `canSee` accumulates `seenFor`; at CAM_LOCK it calls `cameraAlarm` (alarm +
+      flash, never a hit). Disabled (by the switch) it's blind + dead.
+- [x] **Machines are out of play (sight.js + update.js).** `canSee`/`preSpot` return false for
+      a disabled machine; `isKnockoutTarget` is false for any machine; `doDistract`/`doSearchNoise`
+      skip machines (they can't be lured).
+- [x] **The verb (update.js).** `switchTarget()` (face + in range, pure) feeds the one ACT
+      button; `flipSwitch()` powers the target off. `actionContext`/`tryAction` gain a
+      `'switch'` branch, ranked after knockout/grab.
+- [x] **Placement (mapgen.js `placeCameraSwitch`).** Two free floor tiles in CAM_ROOM - camera
+      left half, switch right half, both near mid-height. Non-solid, so they never block a lane.
+      Deterministic per seed.
+- [x] **Visual (render.js).** A camera is a small base with a red lens that tracks its facing +
+      a room-clipped beam; a disabled camera is dim with no beam. A charging camera flashes a "!".
+      A switch is a panel with a red lamp (armed) + cyan lever. Both sit on the minimap (a square
+      for the camera, a cyan dot for the switch) in explored rooms.
+- [x] **The toggle (config.js `TOOLS.camera`).** Gates the camera + its switch (the curation
+      switch for the narrative pass).
+- [x] **Tests (tools/test-switch.js, 17 checks).** Camera exists / is a machine / in the room /
+      non-knockable; the switch targets it; flipSwitch powers it off (latching); a disabled camera
+      is blind; the armed camera accumulates its fuse and trips the alarm (not a hit); a distraction
+      doesn't move it; the switch context resolves in/out of range; operating it kills the camera;
+      `TOOLS.camera` off removes both.
+
+Full suite green: 20 headless, mobile 14/14, touch 13/13, playtest 35/35.
+
 ---
 
 ## Carryovers (open from before)

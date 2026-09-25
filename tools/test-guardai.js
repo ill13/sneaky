@@ -108,6 +108,7 @@ for (const seed of [42, 7, 1337]) {
   let rs = seed;
   const rnd = () => { rs = (rs * 1103515245 + 12345) & 0x7fffffff; return (rs >>> 8) / 0x7fffff; };
   for (const gd of S.guards) {
+    if (gd.machine) continue;   // F39: a camera (machine) has no patrol path to resume
     const c0 = 1 + gd.room[0]*17, c1 = 16 + gd.room[0]*17, r0 = 1 + gd.room[1]*11, r1 = 10 + gd.room[1]*11;
     let spot = null;
     for (let t = 0; t < 60 && !spot; t++) {

@@ -64,6 +64,17 @@ function reset(seed) {
     if (i % POST_STRIDE === POST_OFFSET) { g.post = true; g.postBase = 0; g.postStep = 0; g.postT = 0; }
     else if (TOOLS.sleep && i % SLEEP_STRIDE === SLEEP_OFFSET) g.type = 'sleeper';   // F38: dozes on its round
   });
+  // F39: the camera (first machine) + its switch - the environmental-control
+  // showcase. The camera is a machine (non-knockable, non-distractable); the
+  // switch is the ONLY way to power it off (latching). Placed on two free tiles
+  // in CAM_ROOM (the E hub). Gated by TOOLS.camera (the curation toggle).
+  state.switches = [];
+  if (TOOLS.camera && layout.camSw) {
+    const [cc, cr] = layout.camSw.cam;
+    const cam = makeUnit('camera', 100, makeCamera(cc, cr, 0));   // face east, scanning
+    state.guards.push(cam);
+    state.switches.push(makeSwitch(layout.camSw.sw[0], layout.camSw.sw[1], cam.id));
+  }
   state.units = [state.player, ...state.guards];   // Phase 1: single unit array, player first
   // hide spots (F23): one bin/closet per room, from the layout's seed-picked tiles
   state.hideSpots = (layout.hideSpots || []).map(([c, r]) =>

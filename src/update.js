@@ -26,6 +26,15 @@ function hitPlayer() {
   }
   updateHUD();
 }
+// F39: a camera's detection trips the ALARM (not a hit) - the compound goes hot
+// and you have to deal with the guards. The forgiving grace model: an escalation,
+// not a CAUGHT, and it never increments your hit count.
+function cameraAlarm(g) {
+  state.alarmTime = alarmDuration();
+  state.spotFlash = 1;
+  state.flash = Math.max(state.flash, 0.2);
+  updateHUD();
+}
 
 // ---- The single contextual action (F27) ----
 // One button, the context picks the verb. Carrying a body means your hands are
@@ -38,6 +47,7 @@ function hitPlayer() {
 // Is guard g a valid knockout target right now? (upright, rear arc, touch range).
 // Pure - shared by the button light and the actual knockout so they can't drift.
 function isKnockoutTarget(g) {
+  if (g.machine) return false;   // F39: a machine (camera) can't be clubbed - the switch is its kill
   if (g.state === 'down' || g.state === 'hidden') return false;
   const dx = state.player.x - g.x, dy = state.player.y - g.y;
   if (Math.hypot(dx, dy) > KO_DIST) return false;
@@ -118,6 +128,7 @@ function actionContext() {
   }
   if (knockoutReady()) return 'knockout';       // guard actions beat the wall-distract
   if (downGuardNear(p.x, p.y)) return 'grab';
+  if (switchTarget()) return 'switch';          // F39: facing a power panel - operate it
   if (searchTarget()) return 'search';          // F33: facing an unsearched container
   if (canDistract(p.x, p.y, mdx, mdy) && state.distractCd <= 0) return 'distract';
   return null;
@@ -132,6 +143,7 @@ function tryAction() {
     const g = downGuardNear(p.x, p.y);
     state.carrying = g; g.x = p.x; g.y = p.y; return;
   }
+  if (v === 'switch') { flipSwitch(switchTarget()); return; }   // F39: flip the panel (latching)
   if (v === 'hide') {
     const spot = hideSpotNear(p.x, p.y);
     const g = state.carrying; state.carrying = null;
@@ -170,6 +182,7 @@ function doDistract() {
   // wall. A guard that currently sees you keeps chasing (a distraction can't
   // break a lock-on). targetTile is stored in TILE coords (roomPath's domain).
   for (const g of state.guards) {
+    if (g.machine) continue;   // F39: a machine can't be lured
     if (g.state !== 'patrol' && g.state !== 'search') continue;
     if (!guardSharesRoom(g)) continue;
     if (Math.hypot(g.x - p.x, g.y - p.y) > DISTRACT_HEARING) continue;
@@ -198,6 +211,32 @@ function searchTarget() {
     if ((wx * mdx + wy * mdy) / d > DISTRACT_FACE_COS) { bd = d; best = ct; }
   }
   return best;
+}
+// F39: the switch you're close to AND facing (press toward it), or null. Pure -
+// the HUD lights the ACT button from it too. A flipped (off) switch is inert.
+function switchTarget() {
+  const p = state.player;
+  const [mdx, mdy] = heldMoveDir();
+  if (!mdx && !mdy) return null;
+  let best = null, bd = SWITCH_RANGE;
+  for (const sw of state.switches) {
+    if (!sw.on) continue;
+    const wx = sw.x - p.x, wy = sw.y - p.y;
+    const d = Math.hypot(wx, wy);
+    if (d > bd) continue;
+    if ((wx * mdx + wy * mdy) / d > DISTRACT_FACE_COS) { bd = d; best = sw; }
+  }
+  return best;
+}
+// F39: flip a switch - latching (one-way). The target machine powers off for the
+// rest of the run. This is the ONLY way to stop a machine (non-knockable).
+function flipSwitch(sw) {
+  sw.on = false;
+  const u = state.guards.find((x) => x.id === sw.target.id);
+  if (u) u.disabled = true;
+  state.flash = Math.max(state.flash, 0.15);
+  state.distractFx = { x: sw.x, y: sw.y, t: 0 };   // the "click" ripple
+  updateHUD();
 }
 // Accumulate search progress while you hold ACT on the target container. Called
 // every frame from the controller; opens it once the archetype's time is met.
@@ -256,6 +295,7 @@ function grantAllItems() {
 function doSearchNoise(x, y, radius) {
   const room = roomAt(Math.floor(x / TILE), Math.floor(y / TILE));
   for (const g of state.guards) {
+    if (g.machine) continue;   // F39: a machine can't be lured
     if (g.state !== 'patrol' && g.state !== 'search') continue;
     if (!room || g.room[0] !== room[0] || g.room[1] !== room[1]) continue;
     if (Math.hypot(g.x - x, g.y - y) > radius) continue;

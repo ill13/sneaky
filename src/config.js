@@ -3,7 +3,7 @@
 //  Every knob in one place. Pure constants, no logic.
 //  Classic script: loads first, all names shared globally.
 // ============================================================
-const VERSION = '0.18.0';   // increment on any shipped change; shown next to the title
+const VERSION = '0.19.0';   // increment on any shipped change; shown next to the title
 
 const TILE = 32;
 // 3 x 3 grid of rooms: 3*16 + 2 inner walls + 2 outer = 52 cols,
@@ -108,9 +108,21 @@ const SLEEP_ON = 4.0;         // sec a sleeping guard stays awake
 const SLEEP_OFF = 3.0;        // sec it dozes
 const SLEEP_STRIDE = 4;
 const SLEEP_OFFSET = 1;
+// F39: the camera (the first machine) + its switch. A camera is a stationary
+// floor sensor: it can't be knocked out or lured, it scans its cone, and a
+// sustained look (CAM_LOCK) trips the alarm. The switch is the ONLY way to stop
+// it - flip the panel and it powers off for the rest of the run (latching).
+// The camera lives in CAM_ROOM with its switch, placed on two free tiles.
+const CAM_FOV = 1.5;         // rad - the camera's scan cone (~86 deg, a bit wider than a guard)
+const CAM_LOCK = 1.2;        // sec of sustained line-of-sight before the camera trips the alarm
+const CAM_PAN_SPEED = 0.6;   // rad/sec - how fast its lens sweeps across its arc
+const CAM_PAN_RANGE = 0.9;   // rad - half the sweep, so it scans a ~100-degree arc
+const CAM_ROOM = [1, 1];     // the E hub - the environmental-control showcase room
+const SWITCH_RANGE = 46;     // px - how close you must be to a switch to operate it (like SEARCH_RANGE)
 // F38: the tool toggles. The demo is a kitchen sink (all on); turning a tool off
 // is the curation step for the narrative pass. The generator honors these, so a
 // tool is added/removed without touching the rules.
 const TOOLS = {
-  sleep: true,   // F38: sleeping guards (the duty-cycle timing axis)
+  sleep: true,     // F38: sleeping guards (the duty-cycle timing axis)
+  camera: true,    // F39: the camera + its switch (the environmental-control verb)
 };

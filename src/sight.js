@@ -75,6 +75,7 @@ function guardSharesRoom(g) {
 function canSee(g, fov, range) {
   if (g.state === 'down' || g.state === 'dazed' || g.state === 'hidden') return false;
   if (g.asleep) return false;   // F38: dozing - blind (asleep is only true in patrol)
+  if (g.disabled) return false; // F39: a machine powered off by its switch is blind
   const dx = state.player.x - g.x, dy = state.player.y - g.y;
   const dist = Math.hypot(dx, dy);
   if (dist > range) return false;
@@ -90,6 +91,7 @@ function canSee(g, fov, range) {
 // Patrol guards only (a guard that confirmed you is already chasing). Same room,
 // range, and LOS gates as canSee, but the wider facing band.
 function preSpot(g, range) {
+  if (g.machine) return false;   // F39: machines have their own cue (the "!" on the fuse)
   if (g.state !== 'patrol') return false;
   if (!guardSharesRoom(g)) return false;
   const dx = state.player.x - g.x, dy = state.player.y - g.y;

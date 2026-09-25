@@ -353,6 +353,27 @@ function assignContainerContents(rng, containers) {
   return { containers, for_ };
 }
 
+// F39: pick two free floor tiles in the showcase room for the camera (left half)
+// and its switch (right half), both near mid-height. Deterministic per seed (no
+// rng): the leftmost/rightmost free tile nearest the mid row. The camera and
+// switch are non-solid floor machines, so they never block a patrol lane.
+function placeCameraSwitch(m, room) {
+  const [ox, oy] = roomOrigin(room[0], room[1]);
+  const mid = oy + 4;
+  const isFloor = (c, r, left) => m[r][c] === 0 && (left ? (c - ox) <= 7 : (c - ox) > 7);
+  const pick = (left) => {
+    let best = null, bd = Infinity;
+    for (let r = oy + 1; r <= oy + 8; r++) for (let c = ox + 1; c <= ox + 14; c++) {
+      if (!isFloor(c, r, left)) continue;
+      const d = Math.abs(r - mid) * 10 + (left ? (c - ox) : (ox + 14 - c));
+      if (d < bd) { bd = d; best = [c, r]; }
+    }
+    return best;
+  };
+  const cam = pick(true), sw = pick(false);
+  return (cam && sw) ? { cam, sw } : null;
+}
+
 function generateLayout(seed) {
   for (let attempt = 0; attempt < 96; attempt++) {
     const rng = mulberry32(seed + attempt);
@@ -414,10 +435,12 @@ function generateLayout(seed) {
       hideSpots.every(([c, r]) => !solid(c, r, m)) &&
       kc.allKeys && kc.fileOk && kc.exitOk
     ) {
+      const camSw = placeCameraSwitch(m, CAM_ROOM);   // F39: the camera + its switch
       return {
         map: m, paths, spawn, exit, hideSpots, seed, usedSeed: seed + attempt,
         containers: assigned.containers,   // the final containers (solid, with contents)
         questContainer: assigned.for_,      // { blue, gold, red, objective, stim, hush, heavy } -> container
+        camSw,                              // F39: { cam: [c,r], sw: [c,r] } | null
       };
     }
   }
@@ -447,7 +470,7 @@ function generateFallback(seed) {
   const spawn = absT(SPAWN_T, ROLE.spawn[0], ROLE.spawn[1]);
   const exit = absT(EXIT_POOL[0], ROLE.exit[0], ROLE.exit[1]);
   const hideSpots = ALL_ROOMS.map(([rc, rr]) => absT(HIDE_POOL[0], rc, rr));
-  return { map: m, paths, spawn, exit, hideSpots, seed, usedSeed: -1, containers: assigned.containers, questContainer: assigned.for_ };
+  return { map: m, paths, spawn, exit, hideSpots, seed, usedSeed: -1, containers: assigned.containers, questContainer: assigned.for_, camSw: placeCameraSwitch(m, CAM_ROOM) };
 }
 
 // ---------------- Wall edge table (for exact cone clipping) ----------------

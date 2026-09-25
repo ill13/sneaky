@@ -85,6 +85,12 @@ no file owns both rules and DOM.
   `off`, repeating - and only honored in patrol (a guard chasing you never dozes). The
   sleeping guard is its first face; a blinking laser is the same flag reskinned. Tools are
   gated by `TOOLS` in `config.js` (the demo is a kitchen sink; the narrative pass turns them off).
+- **Machines + switches (the fifth verb).** A machine (the camera) is a data row with
+  `machine: true` - non-knockable, non-distractable, stationary. It scans a cone and trips
+  the **alarm** (an escalation, not a hit) on a sustained look. The only way to stop a
+  machine is its **switch**: a fixed, single-tile operator (`target = {kind:'unit', id}`)
+  you face and tap, latching off for the run. The camera + switch are placed by
+  `placeCameraSwitch` in the showcase room (CAM_ROOM).
 - **Deterministic.** The sim is a pure function of (seed, input stream). A* and the
   guard AI are `Math.random`-free; only the seed drives the layout. The input stream
   is plain/serializable, so a recorded run replays itself and the whole state
