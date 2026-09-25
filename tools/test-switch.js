@@ -97,15 +97,17 @@ const unface = () => { for (const k of ['a', 'd', 'w', 's']) delete state.keys[k
   ok(cam.state === st && cam.hearAngle === undefined, 'T7: a distraction does not affect the camera');
 }
 
-// T8: the switch context - facing it in range resolves it, out of range does not.
+// T8: the switch context - you only need to be ON/OVER it (no facing, no direction).
 {
   g.reset(42);
   const sw = state.switches[0];
   const p = state.player;
-  p.x = sw.x - 30; p.y = sw.y;
-  faceToward(sw.x, sw.y);
-  ok(g.switchTarget() === sw, 'T8: facing the switch in range -> switchTarget resolves it');
-  p.x = sw.x - 80; faceToward(sw.x, sw.y);   // 80px out, past SWITCH_RANGE
+  unface();                                  // no direction held at all
+  p.x = sw.x - 30; p.y = sw.y;               // 30px away, within SWITCH_RANGE
+  ok(g.switchTarget() === sw, 'T8: standing in range with no direction -> switchTarget resolves it');
+  p.x = sw.x; p.y = sw.y;                    // exactly on the switch tile
+  ok(g.switchTarget() === sw, 'T8: standing on the switch -> still resolves it');
+  p.x = sw.x - 80;                           // 80px out, past SWITCH_RANGE
   ok(g.switchTarget() === null, 'T8: out of range -> no switch target');
 }
 

@@ -1598,8 +1598,9 @@ Full suite green: 19 headless, mobile 14/14, touch 13/13, playtest 35/35.
 The fifth core verb. A **camera** is the first *machine*: a stationary floor sensor that
 scans its cone and, on a sustained look (CAM_LOCK), trips the **alarm** - not a hit, an
 escalation (the forgiving grace model). A machine can't be knocked out or lured; the only
-way to stop it is its **switch**. A switch is a fixed, single-tile operator you face and
-tap: flip it and the target powers off for the rest of the run (latching). The camera +
+way to stop it is its **switch**. A switch is a fixed, single-tile operator you step onto
+and tap (no aiming - you just have to be on it): flip it and the target powers off for the
+rest of the run (latching). The camera +
 its switch live in the E hub (CAM_ROOM), the room you traverse twice - cross the room
 *after* you kill the sensor, or take the alarm. This is "the room is a circuit."
 
@@ -1613,9 +1614,10 @@ its switch live in the E hub (CAM_ROOM), the room you traverse twice - cross the
 - [x] **Machines are out of play (sight.js + update.js).** `canSee`/`preSpot` return false for
       a disabled machine; `isKnockoutTarget` is false for any machine; `doDistract`/`doSearchNoise`
       skip machines (they can't be lured).
-- [x] **The verb (update.js).** `switchTarget()` (face + in range, pure) feeds the one ACT
-      button; `flipSwitch()` powers the target off. `actionContext`/`tryAction` gain a
-      `'switch'` branch, ranked after knockout/grab.
+- [x] **The verb (update.js).** `switchTarget()` (in range, **no facing** - a floor plate
+      you stand on / walk over, pure) feeds the one ACT button; `flipSwitch()` powers the
+      target off. `actionContext`/`tryAction` gain a `'switch'` branch, ranked after
+      knockout/grab.
 - [x] **Placement (mapgen.js `placeCameraSwitch`).** Two free floor tiles in CAM_ROOM - camera
       left half, switch right half, both near mid-height. Non-solid, so they never block a lane.
       Deterministic per seed.
@@ -1670,6 +1672,14 @@ path, clear of the camera in E).
       move it; it has no switch; `TOOLS.laser` off removes it.
 
 Full suite green: 21 headless, mobile 14/14, touch 13/13, playtest 35/35.
+
+### 0.20.1 - Switch is a floor plate, not an aim (F41)
+
+A switch should trigger by being **on / over it**, not by aiming at it. The lure-style
+"push in a direction" (the 30-degree facing cone) is gone: `switchTarget()` is now purely
+"within `SWITCH_RANGE` of an armed switch". Stand on the panel (or walk over it) and ACT
+lights up; no direction held. `flipSwitch` is unchanged (latching). test-switch T8 now
+proves it resolves with **no direction held** and while exactly on the tile.
 
 ---
 

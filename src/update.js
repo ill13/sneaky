@@ -129,7 +129,7 @@ function actionContext() {
   }
   if (knockoutReady()) return 'knockout';       // guard actions beat the wall-distract
   if (downGuardNear(p.x, p.y)) return 'grab';
-  if (switchTarget()) return 'switch';          // F39: facing a power panel - operate it
+  if (switchTarget()) return 'switch';          // F39: standing on a power panel - operate it
   if (searchTarget()) return 'search';          // F33: facing an unsearched container
   if (canDistract(p.x, p.y, mdx, mdy) && state.distractCd <= 0) return 'distract';
   return null;
@@ -213,19 +213,19 @@ function searchTarget() {
   }
   return best;
 }
-// F39: the switch you're close to AND facing (press toward it), or null. Pure -
-// the HUD lights the ACT button from it too. A flipped (off) switch is inert.
+// F39: the switch you're standing on / walking over (within SWITCH_RANGE), or
+// null. Pure - the HUD lights the ACT button from it too. No facing: a switch is
+// a floor plate you step to, not something you aim at. A flipped (off) switch is
+// inert.
 function switchTarget() {
   const p = state.player;
-  const [mdx, mdy] = heldMoveDir();
-  if (!mdx && !mdy) return null;
   let best = null, bd = SWITCH_RANGE;
   for (const sw of state.switches) {
     if (!sw.on) continue;
     const wx = sw.x - p.x, wy = sw.y - p.y;
     const d = Math.hypot(wx, wy);
     if (d > bd) continue;
-    if ((wx * mdx + wy * mdy) / d > DISTRACT_FACE_COS) { bd = d; best = sw; }
+    bd = d; best = sw;
   }
   return best;
 }
