@@ -26,10 +26,11 @@ function hitPlayer() {
   }
   updateHUD();
 }
-// F39: a camera's detection trips the ALARM (not a hit) - the compound goes hot
-// and you have to deal with the guards. The forgiving grace model: an escalation,
-// not a CAUGHT, and it never increments your hit count.
-function cameraAlarm(g) {
+// F39/F40: a machine's detection (a camera's lock, a laser's beam contact) trips
+// the ALARM (not a hit) - the compound goes hot and you have to deal with the
+// guards. The forgiving grace model: an escalation, not a CAUGHT, and it never
+// increments your hit count.
+function machineAlarm() {
   state.alarmTime = alarmDuration();
   state.spotFlash = 1;
   state.flash = Math.max(state.flash, 0.2);

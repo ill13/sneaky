@@ -20,7 +20,7 @@ const parkFar = () => { state.player.x = 112; state.player.y = 112; state.player
 {
   g.reset(42);
   const sleepers = state.guards.filter(x => x.type === 'sleeper');
-  const expected = state.guards.map((x, i) => !x.post && i % g.SLEEP_STRIDE === g.SLEEP_OFFSET).filter(Boolean).length;
+  const expected = state.guards.filter((x) => !x.machine).map((x, i) => !x.post && i % g.SLEEP_STRIDE === g.SLEEP_OFFSET).filter(Boolean).length;
   ok(sleepers.length === expected && expected > 0, `T1: ${expected} sleepers by the stride rule (got ${sleepers.length})`);
   ok(sleepers.every(x => !x.post), 'T1: no sleeper is also a post guard');
 }

@@ -76,6 +76,7 @@ function canSee(g, fov, range) {
   if (g.state === 'down' || g.state === 'dazed' || g.state === 'hidden') return false;
   if (g.asleep) return false;   // F38: dozing - blind (asleep is only true in patrol)
   if (g.disabled) return false; // F39: a machine powered off by its switch is blind
+  if (g.laser) return false;    // F40: a laser doesn't cone-see; the beam is its threat
   const dx = state.player.x - g.x, dy = state.player.y - g.y;
   const dist = Math.hypot(dx, dy);
   if (dist > range) return false;

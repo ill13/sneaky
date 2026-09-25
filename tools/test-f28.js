@@ -68,7 +68,7 @@ const ok = (cond, msg) => { console.log((cond ? 'PASS  ' : 'FAIL  ') + msg); if 
 {
   g.reset(42);
   const posts = state.guards.filter(x => x.post);
-  const expected = state.guards.map((x, i) => i % g.POST_STRIDE === g.POST_OFFSET).filter(Boolean).length;
+  const expected = state.guards.filter((x) => !x.machine).map((x, i) => i % g.POST_STRIDE === g.POST_OFFSET).filter(Boolean).length;
   ok(posts.length === expected && expected === 3, `T3: exactly ${expected} post guards (got ${posts.length})`);
 }
 

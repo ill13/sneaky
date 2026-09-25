@@ -64,6 +64,8 @@ function reset(seed) {
     if (i % POST_STRIDE === POST_OFFSET) { g.post = true; g.postBase = 0; g.postStep = 0; g.postT = 0; }
     else if (TOOLS.sleep && i % SLEEP_STRIDE === SLEEP_OFFSET) g.type = 'sleeper';   // F38: dozes on its round
   });
+  // The machines come AFTER the post/sleeper designation: they are not guards, so
+  // they must not shift the stride-rule indices (camera = 100, laser = 101).
   // F39: the camera (first machine) + its switch - the environmental-control
   // showcase. The camera is a machine (non-knockable, non-distractable); the
   // switch is the ONLY way to power it off (latching). Placed on two free tiles
@@ -74,6 +76,13 @@ function reset(seed) {
     const cam = makeUnit('camera', 100, makeCamera(cc, cr, 0));   // face east, scanning
     state.guards.push(cam);
     state.switches.push(makeSwitch(layout.camSw.sw[0], layout.camSw.sw[1], cam.id));
+  }
+  // F40: the laser (the industrial skin of the duty cycle). A fixed emitter whose
+  // beam blinks on/off - cross it while it's dormant. No switch (its defense is
+  // pure timing). Gated by TOOLS.laser.
+  if (TOOLS.laser && layout.laserPos) {
+    const [lc, lr] = layout.laserPos;
+    state.guards.push(makeUnit('laser', 101, makeLaser(lc, lr, 0)));   // beam points east
   }
   state.units = [state.player, ...state.guards];   // Phase 1: single unit array, player first
   // hide spots (F23): one bin/closet per room, from the layout's seed-picked tiles

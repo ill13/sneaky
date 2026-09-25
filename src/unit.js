@@ -67,6 +67,20 @@ const UNIT_TYPES = {
     moveType: 'machine',
     machine: true,   // can't be clubbed / lured / woken - the switch is its kill
   },
+  // F40: the laser (the industrial skin of the duty cycle). A stationary emitter
+  // that projects a beam, blinking on/off. No vision cone (the beam is its threat),
+  // no switch (its defense is pure timing). Non-knockable, non-distractable.
+  laser: {
+    radius: 9,
+    moveSpeed: 0,
+    chaseSpeed: 0,
+    sightDist: 0,     // it doesn't cone-see; the beam is the threat
+    patrolFov: 0,
+    chaseFov: 0,
+    moveType: 'machine',
+    machine: true,    // can't be clubbed / lured
+    duty: { on: LASER_ON, off: LASER_OFF },   // the blinking (shared with the sleeper)
+  },
 };
 
 // Stats lookup: type -> its table row. One source of truth for render + rules.

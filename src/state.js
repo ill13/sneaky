@@ -126,3 +126,23 @@ function makeSwitch(c, r, targetId) {
     on: true,             // the machine is armed until flipped
   };
 }
+// F40: the laser (the industrial skin of the duty cycle). A stationary emitter that
+// projects a beam (a line-segment), blinking on/off. `asleep` = dormant (beam off);
+// `!asleep` = live (beam on). `beamDir`/`beamLen` define the segment. No switch -
+// its defense is pure timing.
+function makeLaser(c, r, facing) {
+  const x = (c + 0.5) * TILE, y = (r + 0.5) * TILE;
+  return {
+    x, y,
+    facing,
+    state: 'patrol',
+    room: roomAt(c, r),
+    laser: true,          // render as a beam emitter
+    machine: true,        // non-knockable, non-distractable
+    beamDir: facing,      // the beam's direction
+    beamLen: LASER_RANGE, // how far the beam reaches
+    beamHit: false,       // is the player in the beam right now (render cue)
+    dutyT: 0,             // the duty-cycle phase timer (starts live)
+    asleep: false,        // false = live (beam on); true = dormant (beam off)
+  };
+}

@@ -3,7 +3,7 @@
 //  Every knob in one place. Pure constants, no logic.
 //  Classic script: loads first, all names shared globally.
 // ============================================================
-const VERSION = '0.19.0';   // increment on any shipped change; shown next to the title
+const VERSION = '0.20.0';   // increment on any shipped change; shown next to the title
 
 const TILE = 32;
 // 3 x 3 grid of rooms: 3*16 + 2 inner walls + 2 outer = 52 cols,
@@ -119,10 +119,20 @@ const CAM_PAN_SPEED = 0.6;   // rad/sec - how fast its lens sweeps across its ar
 const CAM_PAN_RANGE = 0.9;   // rad - half the sweep, so it scans a ~100-degree arc
 const CAM_ROOM = [1, 1];     // the E hub - the environmental-control showcase room
 const SWITCH_RANGE = 46;     // px - how close you must be to a switch to operate it (like SEARCH_RANGE)
+// F40: the laser (the industrial skin of the duty cycle). A fixed emitter projects a
+// beam (a line-segment) that blinks on/off (LASER_ON / LASER_OFF). Cross it while it's
+// dormant; touch it while it's live and it trips the ALARM (an escalation, not a hit).
+// No switch: this machine's defense is pure timing - you can't stop it, only time it.
+const LASER_ROOM = [0, 1];   // the D room - on the path, clear of the camera in E
+const LASER_ON = 2.5;        // sec the beam is live (the duty cycle's on phase)
+const LASER_OFF = 2.5;       // sec the beam is dormant (the duty cycle's off phase)
+const LASER_RANGE = 200;     // px - how far the beam reaches from the emitter
+const BEAM_THICK = 2;        // px - half the beam's width for the contact test
 // F38: the tool toggles. The demo is a kitchen sink (all on); turning a tool off
 // is the curation step for the narrative pass. The generator honors these, so a
 // tool is added/removed without touching the rules.
 const TOOLS = {
   sleep: true,     // F38: sleeping guards (the duty-cycle timing axis)
   camera: true,    // F39: the camera + its switch (the environmental-control verb)
+  laser: true,     // F40: the laser (the duty cycle's industrial skin)
 };

@@ -1633,6 +1633,44 @@ its switch live in the E hub (CAM_ROOM), the room you traverse twice - cross the
 
 Full suite green: 20 headless, mobile 14/14, touch 13/13, playtest 35/35.
 
+### 0.20.0 - Laser (F40): the industrial skin of the duty cycle
+
+The duty cycle's second face. A **laser** is a stationary emitter that projects a beam
+(a line-segment) across a room, blinking **live** (LASER_ON) / **dormant** (LASER_OFF) on
+the same `duty` flag the sleeper uses. Cross it while it's dormant; touch the live beam
+and it trips the **alarm** (an escalation, not a hit). It has **no switch**: this machine's
+defense is pure timing - you can't stop it, only time it. That's the distinction from the
+other two faces: the sleeper is a timing threat you can knock out, the camera is a
+switch-puzzle, the laser is a timing threat you can only *time*. Placed in room D (on the
+path, clear of the camera in E).
+
+- [x] **A new `laser` unit row (unit.js).** `moveSpeed 0`, `machine: true`, no vision cone
+      (`sightDist 0` - the beam is the threat), `duty: {on, off}`. A data row.
+- [x] **The beam contact (ai.js `beamContact`).** Point-to-segment distance from the player's
+      center to the beam; contact when within `player.r + BEAM_THICK`. Pure, reads state only.
+- [x] **The step (ai.js).** Reuses `tickDuty` verbatim (`!asleep` = live). A live beam in
+      contact calls `machineAlarm` (shared with the camera - the F39 rename). Machines never
+      chase.
+- [x] **The shared alarm (update.js).** `cameraAlarm` -> `machineAlarm`: one escalation path
+      for both machines (alarm + flash, never a hit, `hits` stay 0).
+- [x] **Machines out of play (sight.js + update.js).** `canSee` false for a laser (no cone);
+      `isKnockoutTarget`/`doDistract`/`doSearchNoise`/`preSpot` all gate on `machine`.
+- [x] **Placement (mapgen.js `placeLaser`).** One free floor tile in LASER_ROOM (left half,
+      mid-height); the beam points east from it. Deterministic per seed, non-solid.
+- [x] **Visual (render.js).** The emitter is a small base with a red lens; the beam is a line
+      (bright red live, near-invisible dormant, brighter still on contact). A square + a short
+      beam line on the minimap.
+- [x] **The toggle (config.js `TOOLS.laser`).** The curation switch for the narrative pass.
+- [x] **Machines don't shift the stride rule (game.js).** The camera + laser are pushed AFTER
+      the post/sleeper designation, so the stride indices stay on the 16 patrol guards
+      (test-sleep + test-f28 now filter `!machine`).
+- [x] **Tests (tools/test-laser.js, 12 checks).** Exists / is-a-machine / in-room /
+      non-knockable; the duty cycle blinks on schedule (2.5s/2.5s); the live beam trips the
+      alarm (not a hit); a dormant beam is safe; off-the-segment is safe; a distraction doesn't
+      move it; it has no switch; `TOOLS.laser` off removes it.
+
+Full suite green: 21 headless, mobile 14/14, touch 13/13, playtest 35/35.
+
 ---
 
 ## Carryovers (open from before)

@@ -374,6 +374,20 @@ function placeCameraSwitch(m, room) {
   return (cam && sw) ? { cam, sw } : null;
 }
 
+// F40: pick a free floor tile in the laser room for the emitter (left half,
+// near mid-height) - the beam points east from there. Deterministic per seed.
+function placeLaser(m, room) {
+  const [ox, oy] = roomOrigin(room[0], room[1]);
+  const mid = oy + 4;
+  let best = null, bd = Infinity;
+  for (let r = oy + 1; r <= oy + 8; r++) for (let c = ox + 1; c <= ox + 7; c++) {
+    if (m[r][c] !== 0) continue;
+    const d = Math.abs(r - mid) * 10 + (c - ox);
+    if (d < bd) { bd = d; best = [c, r]; }
+  }
+  return best;
+}
+
 function generateLayout(seed) {
   for (let attempt = 0; attempt < 96; attempt++) {
     const rng = mulberry32(seed + attempt);
@@ -436,11 +450,13 @@ function generateLayout(seed) {
       kc.allKeys && kc.fileOk && kc.exitOk
     ) {
       const camSw = placeCameraSwitch(m, CAM_ROOM);   // F39: the camera + its switch
+      const laserPos = placeLaser(m, LASER_ROOM);     // F40: the laser emitter
       return {
         map: m, paths, spawn, exit, hideSpots, seed, usedSeed: seed + attempt,
         containers: assigned.containers,   // the final containers (solid, with contents)
         questContainer: assigned.for_,      // { blue, gold, red, objective, stim, hush, heavy } -> container
         camSw,                              // F39: { cam: [c,r], sw: [c,r] } | null
+        laserPos,                           // F40: [c,r] of the laser emitter | null
       };
     }
   }
@@ -470,7 +486,7 @@ function generateFallback(seed) {
   const spawn = absT(SPAWN_T, ROLE.spawn[0], ROLE.spawn[1]);
   const exit = absT(EXIT_POOL[0], ROLE.exit[0], ROLE.exit[1]);
   const hideSpots = ALL_ROOMS.map(([rc, rr]) => absT(HIDE_POOL[0], rc, rr));
-  return { map: m, paths, spawn, exit, hideSpots, seed, usedSeed: -1, containers: assigned.containers, questContainer: assigned.for_, camSw: placeCameraSwitch(m, CAM_ROOM) };
+  return { map: m, paths, spawn, exit, hideSpots, seed, usedSeed: -1, containers: assigned.containers, questContainer: assigned.for_, camSw: placeCameraSwitch(m, CAM_ROOM), laserPos: placeLaser(m, LASER_ROOM) };
 }
 
 // ---------------- Wall edge table (for exact cone clipping) ----------------

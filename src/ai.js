@@ -102,6 +102,21 @@ function tickDuty(g, dt) {
   if (g.dutyT >= dur) { g.dutyT -= dur; g.asleep = !g.asleep; }
 }
 
+// F40: is the player touching the laser's beam? The beam is a line-segment from
+// the emitter (g.x,g.y) in beamDir for beamLen. Contact = the player's center is
+// within (player.r + BEAM_THICK) of the segment. Pure - reads state only.
+function beamContact(g) {
+  const x0 = g.x, y0 = g.y;
+  const x1 = x0 + Math.cos(g.beamDir) * g.beamLen, y1 = y0 + Math.sin(g.beamDir) * g.beamLen;
+  const dx = x1 - x0, dy = y1 - y0;
+  const len2 = dx * dx + dy * dy;
+  if (len2 < 1e-6) return Math.hypot(state.player.x - x0, state.player.y - y0) < state.player.r + BEAM_THICK;
+  let t = ((state.player.x - x0) * dx + (state.player.y - y0) * dy) / len2;
+  t = Math.max(0, Math.min(1, t));
+  const cx = x0 + t * dx, cy = y0 + t * dy;
+  return Math.hypot(state.player.x - cx, state.player.y - cy) < state.player.r + BEAM_THICK;
+}
+
 // One guard's AI step (Phase 6.2): the room-confined state machine, extracted
 // from update()'s guard loop into a named rule so the AI is a testable unit.
 // Behavior is byte-identical to the loop body it came from. It reaches motion /
@@ -141,8 +156,18 @@ function stepGuard(g, dt) {
     const cs = statsFor(g.type);
     if (canSee(g, cs.patrolFov, visionRangeFor(cs))) {
       g.seenFor += dt;
-      if (g.seenFor >= CAM_LOCK) { g.seenFor = 0; cameraAlarm(g); }
+      if (g.seenFor >= CAM_LOCK) { g.seenFor = 0; machineAlarm(); }
     } else g.seenFor = 0;
+    return;
+  }
+
+  // F40: a laser (machine) - stationary, its beam blinks on/off on the duty
+  // cycle (shared with the sleeper: !asleep = live, asleep = dormant). Touch the
+  // live beam and it trips the ALARM (an escalation, not a hit). No switch.
+  if (g.laser) {
+    tickDuty(g, dt);
+    if (!g.asleep && beamContact(g)) { g.beamHit = true; machineAlarm(); }
+    else g.beamHit = false;
     return;
   }
 

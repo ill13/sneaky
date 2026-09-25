@@ -261,6 +261,15 @@ function drawMinimap(t, range) {
       ctx.fillRect(gx - 2, gy - 2, 4, 4);
       continue;
     }
+    if (g.laser) {    // F40: a beam emitter - a square + a short beam line
+      ctx.fillStyle = g.asleep ? '#5a6478' : '#ff5a5a';
+      ctx.fillRect(gx - 2, gy - 2, 4, 4);
+      ctx.strokeStyle = g.asleep ? 'rgba(90, 100, 120, 0.4)' : 'rgba(255, 90, 90, 0.7)';
+      ctx.lineWidth = 1;
+      const bl = 14;   // px of beam shown on the minimap
+      ctx.beginPath(); ctx.moveTo(gx, gy); ctx.lineTo(gx + Math.cos(g.beamDir) * bl, gy + Math.sin(g.beamDir) * bl); ctx.stroke();
+      continue;
+    }
     const chasing = g.state === 'chase' || g.state === 'search' || g.state === 'hear';
     if (hasUpg && !g.asleep) {   // F38: a dozing guard isn't looking - no cone
       const fov = chasing ? statsFor(g.type).chaseFov : statsFor(g.type).patrolFov;
@@ -549,6 +558,23 @@ function render() {
       ctx.fillStyle = off ? '#4a5262' : '#ff5a5a';   // the lens: red when armed
       ctx.beginPath(); ctx.moveTo(rr + 5 * SCALE, 0); ctx.lineTo(2 * SCALE, -4 * SCALE); ctx.lineTo(2 * SCALE, 4 * SCALE); ctx.closePath(); ctx.fill();
       ctx.restore();
+      continue;   // a machine is not a guard body
+    }
+    if (g.laser) {
+      // F40: a beam emitter - a small base + a beam line (red live, dim dormant)
+      const live = !g.asleep;
+      const bx = gx + Math.cos(g.beamDir) * g.beamLen * SCALE;
+      const by = gy + Math.sin(g.beamDir) * g.beamLen * SCALE;
+      ctx.strokeStyle = live ? (g.beamHit ? '#ff2222' : '#ff5a5a') : 'rgba(90, 100, 120, 0.25)';
+      ctx.lineWidth = (live ? 2.5 : 1.5) * SCALE;
+      ctx.beginPath(); ctx.moveTo(gx, gy); ctx.lineTo(bx, by); ctx.stroke();
+      ctx.fillStyle = live ? '#39414f' : '#262c38';
+      ctx.fillRect(gx - rr, gy - rr, rr * 2, rr * 2);
+      ctx.strokeStyle = live ? '#5a6478' : '#3a4152';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(gx - rr, gy - rr, rr * 2, rr * 2);
+      ctx.fillStyle = live ? '#ff5a5a' : '#4a5262';
+      ctx.beginPath(); ctx.arc(gx, gy, 3 * SCALE, 0, Math.PI * 2); ctx.fill();
       continue;   // a machine is not a guard body
     }
     if (g.post && !down) {
