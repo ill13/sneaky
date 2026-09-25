@@ -81,6 +81,20 @@ const UNIT_TYPES = {
     machine: true,    // can't be clubbed / lured
     duty: { on: LASER_ON, off: LASER_OFF },   // the blinking (shared with the sleeper)
   },
+  // F42: the robot (the moving machine). A sentry that patrols a lane (guard
+  // movement) with a vision cone (guard sight) - but it's a machine: non-knockable,
+  // non-distractable, and it never chases. A sustained look trips the alarm (not a
+  // hit), like the camera. Its switch stops it for the run.
+  robot: {
+    radius: 10,
+    moveSpeed: PATROL_SPEED,   // patrols at guard pace
+    chaseSpeed: PATROL_SPEED,  // it never chases (kept for table completeness)
+    sightDist: VISION_RANGE,
+    patrolFov: PATROL_FOV,
+    chaseFov: CHASE_FOV,
+    moveType: 'patrol',        // it follows an A* path, like a guard
+    machine: true,             // can't be clubbed / lured / woken
+  },
 };
 
 // Stats lookup: type -> its table row. One source of truth for render + rules.

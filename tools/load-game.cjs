@@ -81,7 +81,7 @@ function loadGame() {
       searchTarget, stepSearch, openContainer, grantItem, doSearchNoise, grantAllItems,   // F33: hold-to-search containers + debug grant-all
       switchTarget, flipSwitch, machineAlarm,   // F39: the switch (operates the machine) + the machine alarm (F40 shared)
       roomAt, reachable, solid, generateFallback, mulberry32, validateKeyChain,   // F29: the multi-key solvability proof
-      makeCamera, makeSwitch, makeLaser,   // F39: the camera (machine) + its switch; F40: the laser
+      makeCamera, makeSwitch, makeLaser, makeRobot,   // F39: camera + switch; F40: laser; F42: robot
       KEYS, doorSecTiles, doorSecApproach,   // F29: the colored key/door table + helpers
       SOLUTION_PATH, UPG_TYPES, UPGRADES, WALL_PLAN, DEAD_ENDS,
       CONTAINER_TYPES, NOTE_TEXTS, UPG_ROOMS, OBJECTIVE, containersPerRoom,   // F33: container archetypes + item content
@@ -93,6 +93,7 @@ function loadGame() {
       SLEEP_ON, SLEEP_OFF, SLEEP_STRIDE, SLEEP_OFFSET, TOOLS,   // F38: the duty cycle (sleep) + tool toggles
       CAM_FOV, CAM_LOCK, CAM_PAN_SPEED, CAM_PAN_RANGE, CAM_ROOM, SWITCH_RANGE,   // F39: the camera + its switch
       LASER_ROOM, LASER_ON, LASER_OFF, LASER_RANGE, BEAM_THICK,   // F40: the laser (duty-cycle industrial skin)
+      ROBOT_ROOM, ROBOT_LOCK, ROBOT_PATTERN,   // F42: the robot (the moving machine)
       beamContact,   // F40: the laser beam contact test
       SEARCH_TIME, ALARM_SPEED_MULT, ALARM_RANGE_MULT, ALARM_PATROL_SPEED_MULT, ALARM_SEARCH_MULT, ALARM_DURATION,   // F31: alarm scaling
       runReplay,                                            // src/replay.js: deterministic replay driver

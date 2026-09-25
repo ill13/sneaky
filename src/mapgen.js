@@ -388,6 +388,22 @@ function placeLaser(m, room) {
   return best;
 }
 
+// F42: the robot's patrol lane (a fixed PATTERNS sweep in the room) + a free floor
+// tile for its switch (right edge, near mid-height, off the lane). Deterministic.
+function placeRobot(m, room) {
+  const pat = PATTERNS[ROBOT_PATTERN];
+  const path = pat.pts.map((t) => absT(t, room[0], room[1]));
+  const [ox, oy] = roomOrigin(room[0], room[1]);
+  const mid = oy + 4;
+  let sw = null, bd = Infinity;
+  for (let r = oy + 1; r <= oy + 8; r++) for (let c = ox + 1; c <= ox + 14; c++) {
+    if (m[r][c] !== 0) continue;
+    const d = Math.abs(r - mid) * 10 + (ox + 14 - c);
+    if (d < bd) { bd = d; sw = [c, r]; }
+  }
+  return { path, sw };
+}
+
 function generateLayout(seed) {
   for (let attempt = 0; attempt < 96; attempt++) {
     const rng = mulberry32(seed + attempt);
@@ -451,12 +467,14 @@ function generateLayout(seed) {
     ) {
       const camSw = placeCameraSwitch(m, CAM_ROOM);   // F39: the camera + its switch
       const laserPos = placeLaser(m, LASER_ROOM);     // F40: the laser emitter
+      const robotPos = placeRobot(m, ROBOT_ROOM);     // F42: the robot lane + its switch
       return {
         map: m, paths, spawn, exit, hideSpots, seed, usedSeed: seed + attempt,
         containers: assigned.containers,   // the final containers (solid, with contents)
         questContainer: assigned.for_,      // { blue, gold, red, objective, stim, hush, heavy } -> container
         camSw,                              // F39: { cam: [c,r], sw: [c,r] } | null
         laserPos,                           // F40: [c,r] of the laser emitter | null
+        robotPos,                           // F42: { path, sw: [c,r] } | null
       };
     }
   }
@@ -486,7 +504,7 @@ function generateFallback(seed) {
   const spawn = absT(SPAWN_T, ROLE.spawn[0], ROLE.spawn[1]);
   const exit = absT(EXIT_POOL[0], ROLE.exit[0], ROLE.exit[1]);
   const hideSpots = ALL_ROOMS.map(([rc, rr]) => absT(HIDE_POOL[0], rc, rr));
-  return { map: m, paths, spawn, exit, hideSpots, seed, usedSeed: -1, containers: assigned.containers, questContainer: assigned.for_, camSw: placeCameraSwitch(m, CAM_ROOM), laserPos: placeLaser(m, LASER_ROOM) };
+  return { map: m, paths, spawn, exit, hideSpots, seed, usedSeed: -1, containers: assigned.containers, questContainer: assigned.for_, camSw: placeCameraSwitch(m, CAM_ROOM), laserPos: placeLaser(m, LASER_ROOM), robotPos: placeRobot(m, ROBOT_ROOM) };
 }
 
 // ---------------- Wall edge table (for exact cone clipping) ----------------

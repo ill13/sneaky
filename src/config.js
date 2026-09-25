@@ -3,7 +3,7 @@
 //  Every knob in one place. Pure constants, no logic.
 //  Classic script: loads first, all names shared globally.
 // ============================================================
-const VERSION = '0.20.1';   // increment on any shipped change; shown next to the title
+const VERSION = '0.21.0';   // increment on any shipped change; shown next to the title
 
 const TILE = 32;
 // 3 x 3 grid of rooms: 3*16 + 2 inner walls + 2 outer = 52 cols,
@@ -128,6 +128,13 @@ const LASER_ON = 2.5;        // sec the beam is live (the duty cycle's on phase)
 const LASER_OFF = 2.5;       // sec the beam is dormant (the duty cycle's off phase)
 const LASER_RANGE = 200;     // px - how far the beam reaches from the emitter
 const BEAM_THICK = 2;        // px - half the beam's width for the contact test
+// F42: the robot (the moving machine). A sentry that patrols a lane (guard
+// movement) with a vision cone (guard sight) - but it's a machine: non-knockable,
+// non-distractable, and it never chases. A sustained look (ROBOT_LOCK) trips the
+// ALARM (not a hit), like the camera. Its switch stops it for the run.
+const ROBOT_ROOM = [1, 2];   // the H Vault - the file room; the objective guarded
+const ROBOT_LOCK = 1.0;      // sec of sustained line-of-sight before it trips the alarm
+const ROBOT_PATTERN = 3;     // PATTERNS index (rectFull) - a near-perimeter sweep
 // F38: the tool toggles. The demo is a kitchen sink (all on); turning a tool off
 // is the curation step for the narrative pass. The generator honors these, so a
 // tool is added/removed without touching the rules.
@@ -135,4 +142,5 @@ const TOOLS = {
   sleep: true,     // F38: sleeping guards (the duty-cycle timing axis)
   camera: true,    // F39: the camera + its switch (the environmental-control verb)
   laser: true,     // F40: the laser (the duty cycle's industrial skin)
+  robot: true,     // F42: the robot (the moving machine + its switch)
 };

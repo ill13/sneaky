@@ -87,12 +87,14 @@ no file owns both rules and DOM.
   flag drives a beam that blinks live/dormant. Tools are gated by `TOOLS` in `config.js`
   (the demo is a kitchen sink; the narrative pass turns them off).
 - **Machines + switches (the fifth verb).** A machine is a data row with `machine: true`
-  - non-knockable, non-distractable, stationary. Two faces ship: the **camera** (scans a
-  cone, trips the **alarm** on a sustained look - stop it with its **switch**, a fixed
-  single-tile operator you step onto and tap, latching off) and the **laser** (a beam that blinks
-  live/dormant on the duty cycle - touch the live beam and it trips the alarm; **no switch**,
-  its defense is pure timing). Both share `machineAlarm` (an escalation, not a hit). Machines
-  are pushed after the post/sleeper designation so they never shift the stride-rule indices.
+  - non-knockable, non-distractable. Three faces ship: the **camera** (scans a cone, trips
+  the **alarm** on a sustained look - stop it with its **switch**, a fixed single-tile
+  operator you step onto and tap, latching off), the **laser** (a beam that blinks live/dormant
+  on the duty cycle - touch the live beam and it trips the alarm; **no switch**, pure timing),
+  and the **robot** (a moving sentry that patrols a lane with a vision cone; a sustained look
+  trips the alarm, **no chase** - stop it with its switch). All three share `machineAlarm`
+  (an escalation, not a hit). Machines are pushed after the post/sleeper designation so they
+  never shift the stride-rule indices.
 - **Deterministic.** The sim is a pure function of (seed, input stream). A* and the
   guard AI are `Math.random`-free; only the seed drives the layout. The input stream
   is plain/serializable, so a recorded run replays itself and the whole state

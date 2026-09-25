@@ -130,9 +130,9 @@ const unface = () => { for (const k of ['a', 'd', 'w', 's']) delete state.keys[k
   g.TOOLS.camera = false;
   g.reset(42);
   const after = state.guards.filter((x) => x.camera).length;
-  const swAfter = state.switches.length;
+  const camSwitch = state.switches.some((s) => { const u = state.guards.find((x) => x.id === s.target.id); return u && u.camera; });
   g.TOOLS.camera = true;   // restore
-  ok(before > 0 && after === 0 && swAfter === 0, 'T9: TOOLS.camera off removes the camera + its switch');
+  ok(before > 0 && after === 0 && !camSwitch, 'T9: TOOLS.camera off removes the camera + its switch');
 }
 
 console.log(fails ? `\n${fails} CHECK(S) FAILED` : '\nALL F39 (switch + camera) CHECKS PASSED');

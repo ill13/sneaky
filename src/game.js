@@ -84,6 +84,14 @@ function reset(seed) {
     const [lc, lr] = layout.laserPos;
     state.guards.push(makeUnit('laser', 101, makeLaser(lc, lr, 0)));   // beam points east
   }
+  // F42: the robot (the moving machine). A sentry that patrols the Vault lane with
+  // a vision cone; a sustained look trips the alarm (not a hit). It never chases.
+  // Its switch stops it for the run (latching), like the camera. Gated by TOOLS.robot.
+  if (TOOLS.robot && layout.robotPos) {
+    const robot = makeUnit('robot', 102, makeRobot(layout.robotPos.path));
+    state.guards.push(robot);
+    if (layout.robotPos.sw) state.switches.push(makeSwitch(layout.robotPos.sw[0], layout.robotPos.sw[1], robot.id));
+  }
   state.units = [state.player, ...state.guards];   // Phase 1: single unit array, player first
   // hide spots (F23): one bin/closet per room, from the layout's seed-picked tiles
   state.hideSpots = (layout.hideSpots || []).map(([c, r]) =>

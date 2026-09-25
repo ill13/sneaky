@@ -146,3 +146,15 @@ function makeLaser(c, r, facing) {
     asleep: false,        // false = live (beam on); true = dormant (beam off)
   };
 }
+// F42: the robot (the moving machine). A guard's patrol fields (it follows an A*
+// lane) plus the machine flags: non-knockable, non-distractable, and it never
+// chases - a sustained look trips the alarm instead. `disabled` is flipped by its
+// switch (like the camera).
+function makeRobot(path) {
+  const base = makeGuard(path);
+  base.robot = true;       // render as a moving sentry
+  base.machine = true;     // non-knockable, non-distractable
+  base.disabled = false;   // flipped off by the switch
+  base.seenFor = 0;        // the detection fuse
+  return base;
+}

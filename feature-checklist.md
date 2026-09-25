@@ -1681,6 +1681,46 @@ A switch should trigger by being **on / over it**, not by aiming at it. The lure
 lights up; no direction held. `flipSwitch` is unchanged (latching). test-switch T8 now
 proves it resolves with **no direction held** and while exactly on the tile.
 
+### 0.21.0 - Robot (F42): the moving machine
+
+The third machine, and the one that proves the unified unit model: for the first time a
+`machine: true` unit **pathfinds and moves**. A **robot** is a sentry that patrols a lane
+(guard movement - the same `followPath` / `roomPath` A* a guard uses) with a vision cone
+(guard sight). It's a machine: non-knockable, non-distractable, and it **never chases** -
+a sustained look (ROBOT_LOCK) trips the **alarm** (not a hit), like the camera. Its **switch**
+stops it for the run (latching). So the robot combines the two machine defenses: *time it*
+(it moves) and *stop it* (the switch). Placed in the **Vault** (the file room) - the
+objective is guarded by a moving sentinel.
+
+- [x] **A new `robot` unit row (unit.js).** Guard stats (`moveSpeed PATROL_SPEED`,
+      `sightDist VISION_RANGE`, `patrolFov PATROL_FOV`), `moveType 'patrol'` (it follows an
+      A* path), `machine: true`. A data row that moves.
+- [x] **`makeRobot(path)` (state.js).** Reuses the guard's patrol fields (path / wp /
+      pathTiles / room) + the machine flags (`robot`, `machine`, `disabled: false`,
+      `seenFor: 0`). The robot is literally a guard that's a machine.
+- [x] **The step (ai.js).** A machine branch (like camera / laser): if `disabled`, stop +
+      go blind. Otherwise it patrols its lane (the guard's A* path-following) and accumulates
+      a detection fuse on `canSee`; at ROBOT_LOCK it calls `machineAlarm` (shared with the
+      camera). No `enterChase`, no shoot, no tag - a moving sentinel.
+- [x] **Machines out of play (already).** `isKnockoutTarget` / `doDistract` / `doSearchNoise`
+      / `preSpot` gate on `machine` (the robot is covered); `canSee` is false when `disabled`
+      (its switch). No new sight / update gating needed.
+- [x] **Placement (mapgen.js `placeRobot`).** A fixed PATTERNS sweep (rectFull) in
+      ROBOT_ROOM + a free floor tile for the switch (right edge, mid-height). Deterministic,
+      non-solid.
+- [x] **Visual (render.js).** A square robotic body with a green sensor lens that tracks its
+      facing + a green vision cone (the `drawCone` tint is green for a robot, vs yellow for a
+      guard). Dim + no cone when disabled. A green square (armed) / gray (off) on the minimap.
+- [x] **The toggle (config.js `TOOLS.robot`).** The curation switch for the narrative pass.
+- [x] **Tests (tools/test-robot.js, 11 checks).** Exists / is-a-machine / in-the-Vault /
+      non-knockable; it patrols (moves); it has a switch; a sustained look trips the alarm (not
+      a hit); it never chases; a disabled robot is stopped + blind; a distraction doesn't move
+      it; `TOOLS.robot` off removes it + its switch.
+- [x] **test-switch T9** now checks the camera's switch is gone (not zero total - the robot
+      has its own).
+
+Full suite green: 22 headless, mobile 14/14, touch 13/13, playtest 35/35.
+
 ---
 
 ## Carryovers (open from before)

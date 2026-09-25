@@ -96,7 +96,7 @@ function drawCone(g, range) {
     ctx.rect(fx(ox * TILE), fy(oy * TILE), 16 * TILE * SCALE, 10 * TILE * SCALE);
     ctx.clip();
   }
-  ctx.fillStyle = g.state === 'chase' ? 'rgba(255,82,82,0.30)' : 'rgba(255,214,90,0.16)';
+  ctx.fillStyle = g.state === 'chase' ? 'rgba(255,82,82,0.30)' : (g.robot ? 'rgba(87, 217, 138, 0.18)' : 'rgba(255,214,90,0.16)');
   ctx.beginPath();
   ctx.moveTo(gx, gy);
   ctx.arc(gx, gy, range * SCALE, g.facing - fov / 2, g.facing + fov / 2);
@@ -268,6 +268,11 @@ function drawMinimap(t, range) {
       ctx.lineWidth = 1;
       const bl = 14;   // px of beam shown on the minimap
       ctx.beginPath(); ctx.moveTo(gx, gy); ctx.lineTo(gx + Math.cos(g.beamDir) * bl, gy + Math.sin(g.beamDir) * bl); ctx.stroke();
+      continue;
+    }
+    if (g.robot) {    // F42: a moving sentry - a square, green when armed, gray when off
+      ctx.fillStyle = g.disabled ? '#5a6478' : '#57d98a';
+      ctx.fillRect(gx - 2, gy - 2, 4, 4);
       continue;
     }
     const chasing = g.state === 'chase' || g.state === 'search' || g.state === 'hear';
@@ -575,6 +580,24 @@ function render() {
       ctx.strokeRect(gx - rr, gy - rr, rr * 2, rr * 2);
       ctx.fillStyle = live ? '#ff5a5a' : '#4a5262';
       ctx.beginPath(); ctx.arc(gx, gy, 3 * SCALE, 0, Math.PI * 2); ctx.fill();
+      continue;   // a machine is not a guard body
+    }
+    if (g.robot) {
+      // F42: a moving sentry - a small robotic body with a lens that tracks its
+      // facing + a vision cone. Dim + no cone when disabled (switched off).
+      const off = g.disabled;
+      if (!off) drawCone(g, range);   // the active vision, clipped to the room
+      ctx.fillStyle = off ? '#262c38' : '#39414f';
+      ctx.fillRect(gx - rr, gy - rr, rr * 2, rr * 2);
+      ctx.strokeStyle = off ? '#3a4152' : '#5a6478';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(gx - rr, gy - rr, rr * 2, rr * 2);
+      ctx.save();
+      ctx.translate(gx, gy);
+      ctx.rotate(g.facing);
+      ctx.fillStyle = off ? '#4a5262' : '#57d98a';   // the sensor: green when armed
+      ctx.beginPath(); ctx.moveTo(rr + 5 * SCALE, 0); ctx.lineTo(2 * SCALE, -4 * SCALE); ctx.lineTo(2 * SCALE, 4 * SCALE); ctx.closePath(); ctx.fill();
+      ctx.restore();
       continue;   // a machine is not a guard body
     }
     if (g.post && !down) {

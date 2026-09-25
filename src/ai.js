@@ -171,6 +171,36 @@ function stepGuard(g, dt) {
     return;
   }
 
+  // F42: a robot (the moving machine) - patrols its lane (guard movement) with a
+  // vision cone; a sustained look trips the ALARM (not a hit). It never chases,
+  // shoots, or tags - a moving sentinel. Disabled (by its switch) it's stopped +
+  // blind. Machines never chase.
+  if (g.robot) {
+    if (g.disabled) { g.seenFor = 0; return; }
+    const rs = statsFor(g.type);
+    if (g.pause > 0) g.pause -= dt;
+    else {
+      if (!g.pathTiles.length) {
+        const t = g.path[g.wp];
+        g.pathTiles = roomPath(g, Math.floor(t.x / TILE), Math.floor(t.y / TILE));
+        g.wpTile = 0;
+      }
+      if (followPath(g, moveSpeedFor(rs), dt)) {
+        const t = g.path[g.wp];
+        if (Math.hypot(t.x - g.x, t.y - g.y) < 3) {
+          g.wp = (g.wp + 1) % g.path.length;
+          g.pathTiles = [];
+          g.pause = 0.7;
+        }
+      }
+    }
+    if (canSee(g, rs.patrolFov, visionRangeFor(rs))) {
+      g.seenFor += dt;
+      if (g.seenFor >= ROBOT_LOCK) { g.seenFor = 0; machineAlarm(); }
+    } else g.seenFor = 0;
+    return;
+  }
+
   // F28: post guard - stuck at its post, only its head turns. It swings through
   // the four cardinal directions in 90-degree steps, holding each, to monitor
   // the room. It sees you (the alarm re-heat reads canSee) and can tag you if
