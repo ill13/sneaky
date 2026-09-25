@@ -1,22 +1,19 @@
 # SNEAK RUN
 
-Real-time stealth, room by room. The facility is a 3x3 grid of rooms, and here's the
-thing: each room is its own little level, not one big open space. You solve a room,
+Real-time stealth, room by room. The facility is a 3x3 grid of rooms, and each room is its own little level, not one big open space. You solve a room,
 you move on. The three colored keys, the file, and the upgrades are all stuffed inside
 furniture - desks, cabinets, copiers, the safe - and you don't know where any of them
 are at the start. The notes you pull out of the furniture name the rooms for you. So
 the loop is: search the top rooms, read what you find, and each one lights up on the
 minimap as you go. Hold ACT on a container to search it, open the matching doors on the
 sealed bottom row, take the file, and reach the exit. Try not to get spotted doing any
-of it. Silent quarter, by the way: no audio, no compass, no exact objective marker. The
+of it. Silent quarter: no audio, no compass, no exact objective marker. The
 fog is the game.
 
-And it's built the way I like to build things - plain HTML/CSS/JS, zero dependencies,
-no build step. You open `index.html` from `file://` and it just runs. Nothing phones
-home, nothing's tracked, no cloud, no telemetry. [nothing leaves the device, ever -
-that's the design, not a feature I bolted on afterward] It's mobile-first (portrait is
-the primary target) with keyboard, gamepad, and touch all supported. I'm not here to
-impress you with a framework. I'm here to hand you a game that runs.
+It's plain HTML/CSS/JS, zero dependencies, no build step. You open `index.html` from
+`file://` and it just runs. Nothing phones home, nothing's tracked, no cloud, no
+telemetry. It's mobile-first (portrait is the primary target) with keyboard, gamepad,
+and touch all supported.
 
 **Play it live:** [https://ill13.github.io/sneaky/](https://ill13.github.io/sneaky/) -
 GitHub Pages, deployed from `main`. Every push to `main` updates the live game.
@@ -65,8 +62,7 @@ GitHub Pages, deployed from `main`. Every push to `main` updates the live game.
 - **Deterministic.** The sim is a pure function of (seed, input stream). A* and the
   guard AI are `Math.random`-free; only the seed drives the layout. The input stream is
   plain and serializable, so a recorded run replays itself and the whole state
-  round-trips through JSON. That's the multiplayer/persistence foundation, and honestly
-  it's why I trust this thing.
+  round-trips through JSON. That's the multiplayer/persistence foundation.
 - **Only A\*.** Pathfinding is A* in `src/path.js`. (`mapgen.js` has a separate
   flood-fill, but that's a generation-time solvability check, not a unit pathfinder.
   Don't conflate the two.)
@@ -75,9 +71,7 @@ GitHub Pages, deployed from `main`. Every push to `main` updates the live game.
 
 Flat classic scripts, shared global scope, loaded in dependency order - the per-file
 responsibility notes are in `index.html`. One job per file, and no file owns both the
-rules and the DOM. I went to school in the '70s, '80s, and '90s, so black boxes aren't
-something I just accept, and a file that's secretly three files is a black box by
-another name.
+rules and the DOM.
 
 | file | job |
 |---|---|
