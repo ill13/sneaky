@@ -38,63 +38,6 @@ GitHub Pages, deployed from `main`. Every push to `main` updates the live game.
   doors still open on proximity. It's for tuning and setting up a playtest, not for
   winning.
 
-## Run the tests
-
-Keep them green. If one goes red, you broke something, and it will tell you which.
-```
-node tools/test-gen.js        # map generation (density, reachability, solvability)
-node tools/test-cone.js       # vision cone / LOS math
-node tools/test-guardai.js    # the room-confined guard AI (chase, search, return, doorway)
-node tools/test-bodies.js     # grab / carry / hide / drop bodies in bins
-node tools/test-knock.js      # the distract mechanic (make a noise at a wall, lure a same-room guard)
-node tools/test-move.js       # movement / collision / radius / no-tunnel
-node tools/test-corner.js     # corner-wedge escape on the real update()
-node tools/test-units.js      # the data-driven unit model + new-type provenance
-node tools/test-intents.js    # the intent layer + the run replays itself + determinism
-node tools/test-serialize.js  # the whole state JSON-round-trips losslessly
-node tools/test-los.js        # knockout mid-animation + no seeing through kitty-cornered blocks
-node tools/test-action.js     # the contextual ACT button (knockout/grab/hide/distract/drop precedence)
-node tools/sim-play.js        # a deterministic, search-aware bot plays (a difficulty probe, not a tuning signal)
-node tools/replay.js [file]   # run a recorded intent stream headless (or the built-in demo)
-```
-Playwright UI checks (you'll need a debug Chrome on `:9222` and `NODE_PATH` pointed at
-your Playwright install; override the port with `CDP_URL`):
-```
-node tools/check-mobile.js    # layout across portrait / landscape / desktop
-node tools/check-touch.js     # the touch input flow (menu, the ACT button)
-```
-
-## The source (`src/`)
-
-Flat classic scripts, shared global scope, loaded in dependency order - the per-file
-responsibility notes are in `index.html`. One job per file, and no file owns both the
-rules and the DOM. I went to school in the '70s, '80s, and '90s, so black boxes aren't
-something I just accept, and a file that's secretly three files is a black box by
-another name.
-
-| file | job |
-|---|---|
-| `config.js` | all tunable constants + `VERSION` |
-| `unit.js` | the `UNIT_TYPES` stat table, `statsFor(type)`, `makeUnit` |
-| `rng.js` | the seeded RNG (`mulberry32`) - only the seed drives layout |
-| `content.js` | procedural content: obstacle shapes, patrol patterns, container archetypes + contents |
-| `theme.js` | the presentation layer: room names, container glyphs/colors, item names, the briefing (theme-swappable) |
-| `state.js` | `makeGuard` + the initial state shape |
-| `mapgen.js` | the 3x3 room layout, obstacles, patrol paths, reachability |
-| `sight.js` | vision rules (`canSee` / `preSpot` / `hasLOS`) + the single fog owner |
-| `movement.js` | `tryMove` / `freeMove`: radius-aware collision (all units) |
-| `path.js` | A* - the ONE pathfinding algorithm (`roomPath`) |
-| `ai.js` | the guard AI: the room-confined pursuit state machine |
-| `hud.js` | the DOM: the menu panel + HUD text/buttons |
-| `game.js` | `reset()` - builds a run from a seed |
-| `update.js` | `update()` orchestration + player interactions (knockout / body-drag / distract) + combat |
-| `controller.js` | `stepPlayer` + `processIntents`: consumes the player's intents |
-| `replay.js` | `runReplay`: the deterministic, serializable run driver |
-| `render.js` | the canvas: world, minimap, cones, HUD |
-| `controls.js` | the touch d-pad + buttons + gamepad poll |
-| `input.js` | keyboard -> raw held input + meta intents |
-| `main.js` | boot, the main loop, the `__SNEAK` dev hooks |
-
 ## Design notes
 
 - **Rooms are levels.** A guard lives in one room and never crosses a door. When it
@@ -127,6 +70,66 @@ another name.
 - **Only A\*.** Pathfinding is A* in `src/path.js`. (`mapgen.js` has a separate
   flood-fill, but that's a generation-time solvability check, not a unit pathfinder.
   Don't conflate the two.)
+
+## The source (`src/`)
+
+Flat classic scripts, shared global scope, loaded in dependency order - the per-file
+responsibility notes are in `index.html`. One job per file, and no file owns both the
+rules and the DOM. I went to school in the '70s, '80s, and '90s, so black boxes aren't
+something I just accept, and a file that's secretly three files is a black box by
+another name.
+
+| file | job |
+|---|---|
+| `config.js` | all tunable constants + `VERSION` |
+| `unit.js` | the `UNIT_TYPES` stat table, `statsFor(type)`, `makeUnit` |
+| `rng.js` | the seeded RNG (`mulberry32`) - only the seed drives layout |
+| `content.js` | procedural content: obstacle shapes, patrol patterns, container archetypes + contents |
+| `theme.js` | the presentation layer: room names, container glyphs/colors, item names, the briefing (theme-swappable) |
+| `state.js` | `makeGuard` + the initial state shape |
+| `mapgen.js` | the 3x3 room layout, obstacles, patrol paths, reachability |
+| `sight.js` | vision rules (`canSee` / `preSpot` / `hasLOS`) + the single fog owner |
+| `movement.js` | `tryMove` / `freeMove`: radius-aware collision (all units) |
+| `path.js` | A* - the ONE pathfinding algorithm (`roomPath`) |
+| `ai.js` | the guard AI: the room-confined pursuit state machine |
+| `hud.js` | the DOM: the menu panel + HUD text/buttons |
+| `game.js` | `reset()` - builds a run from a seed |
+| `update.js` | `update()` orchestration + player interactions (knockout / body-drag / distract) + combat |
+| `controller.js` | `stepPlayer` + `processIntents`: consumes the player's intents |
+| `replay.js` | `runReplay`: the deterministic, serializable run driver |
+| `render.js` | the canvas: world, minimap, cones, HUD |
+| `controls.js` | the touch d-pad + buttons + gamepad poll |
+| `input.js` | keyboard -> raw held input + meta intents |
+| `main.js` | boot, the main loop, the `__SNEAK` dev hooks |
+
+
+
+## Run the tests
+
+Keep them green. If one goes red, you broke something, and it will tell you which.
+```
+node tools/test-gen.js        # map generation (density, reachability, solvability)
+node tools/test-cone.js       # vision cone / LOS math
+node tools/test-guardai.js    # the room-confined guard AI (chase, search, return, doorway)
+node tools/test-bodies.js     # grab / carry / hide / drop bodies in bins
+node tools/test-knock.js      # the distract mechanic (make a noise at a wall, lure a same-room guard)
+node tools/test-move.js       # movement / collision / radius / no-tunnel
+node tools/test-corner.js     # corner-wedge escape on the real update()
+node tools/test-units.js      # the data-driven unit model + new-type provenance
+node tools/test-intents.js    # the intent layer + the run replays itself + determinism
+node tools/test-serialize.js  # the whole state JSON-round-trips losslessly
+node tools/test-los.js        # knockout mid-animation + no seeing through kitty-cornered blocks
+node tools/test-action.js     # the contextual ACT button (knockout/grab/hide/distract/drop precedence)
+node tools/sim-play.js        # a deterministic, search-aware bot plays (a difficulty probe, not a tuning signal)
+node tools/replay.js [file]   # run a recorded intent stream headless (or the built-in demo)
+```
+Playwright UI checks (you'll need a debug Chrome on `:9222` and `NODE_PATH` pointed at
+your Playwright install; override the port with `CDP_URL`):
+```
+node tools/check-mobile.js    # layout across portrait / landscape / desktop
+node tools/check-touch.js     # the touch input flow (menu, the ACT button)
+```
+
 
 ## Dev hooks
 
