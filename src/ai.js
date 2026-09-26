@@ -333,7 +333,10 @@ function stepGuard(g, dt) {
       enterChase(g);
     } else {
       if (!g.pathTiles.length) g.pathTiles = roomPath(g, g.targetTile[0], g.targetTile[1]);
-      if (followPath(g, moveSpeedFor(s), dt)) {
+      // F45: a reinforcement converges at CHASE pace - it's responding to the alarm,
+      // not patrolling - so it crosses the room in a few seconds, not nine.
+      const spd = g.reinforcement ? s.chaseSpeed : moveSpeedFor(s);
+      if (followPath(g, spd, dt)) {
         g.facing += 2.2 * dt;                 // sweep at the noise, looking around
         g.searchT -= dt;
         if (g.searchT <= 0) resumePatrol(g);

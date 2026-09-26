@@ -3,8 +3,8 @@
 //  Every knob in one place. Pure constants, no logic.
 //  Classic script: loads first, all names shared globally.
 // ============================================================
-const VERSION = '0.24.0';   // increment on any shipped change; shown next to the title
-// 0.24.0: F45 (alarm converge + MGS reinforcements), F46 (the hit pool / health), F47 (the pull)
+const VERSION = '0.24.1';   // increment on any shipped change; shown next to the title
+// 0.24.1: F45 tuning - the reinforcement converges at chase pace (arrives in ~6s, not ~9)
 
 const TILE = 32;
 // 3 x 3 grid of rooms: 3*16 + 2 inner walls + 2 outer = 52 cols,
