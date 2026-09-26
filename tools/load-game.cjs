@@ -91,6 +91,7 @@ function loadGame() {
       SOLUTION_PATH, UPG_TYPES, UPGRADES, WALL_PLAN, DEAD_ENDS,
       CONTAINER_TYPES, NOTE_TEXTS, UPG_ROOMS, OBJECTIVE, containersPerRoom,   // F33: container archetypes + item content
       THEME, buildBriefing, SEARCH_NOISE, SEARCH_RANGE, roomName, clueText,   // F33: the theme layer + search tuning
+      roomNameLabel: () => { const el = document.getElementById('room-name'); return el ? el.textContent : null; },   // the "you are here" HUD label
       shuffle, pick, CLUE_ROOMS, dropBody,   // F34: clue notes + the knockout topple
       CARRY_SPEED_MULT, GRAB_DIST, HIDE_DIST, KO_TIME, DAZE_TIME, WAKE_SPOT_DIST, WAKE_DISCOVER_DIST,
       DISTRACT_HEARING, DISTRACT_WALL_DIST, DISTRACT_FACE_COS, DISTRACT_COOLDOWN, DISTRACT_INVESTIGATE, HEAR_PAUSE,

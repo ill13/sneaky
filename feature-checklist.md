@@ -1835,6 +1835,29 @@ Full suite green: 28 headless.
 
 ---
 
+### 0.26.0 - The "you are here" room label (F48)
+
+The room names (the West Office, the Mailroom, Records, the Archives, East
+Storage, the Loading Dock, the Vault, the Basement) lived in `THEME.rooms` and
+fed the clue notes and the briefing, but they were never shown in the world -
+ghosts in the clue language, absent in the rooms. F48 makes them land: a quiet
+word in the top-left of the play area names the room you're standing in.
+
+- The label reads `roomName(roomAt(playerTile))`, so a theme swap re-skins it for
+  free. It's held while you're in a doorway (threshold tile, `roomAt` null) so it
+  never flickers blank.
+- DOM: a hidden `<span id="room-name">` (the HUD spans are a data source; render
+  mirrors them). `drawRoomName()` draws it at the top-left of the play window at
+  low opacity (0.5), small (12px) - an anchor, not a banner.
+- The minimap stays dots-only (the clue's key dot is the map's room pointer; the
+  name belongs in the HUD). The player triangulates: dot on the map + name from
+  the note + the HUD confirming it when they step in.
+
+Tests: `tools/test-roomname.js` (spawn label, follows the player into rooms, holds
+in a doorway). Full suite green: 29 headless.
+
+---
+
 ### 0.25.1 - The beam gates the entrance, not the nook's length (F44)
 
 The 0.25.0 setpiece had a 1-tile mouth in the middle of the open side and the beam

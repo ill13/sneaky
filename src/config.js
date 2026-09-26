@@ -3,7 +3,10 @@
 //  Every knob in one place. Pure constants, no logic.
 //  Classic script: loads first, all names shared globally.
 // ============================================================
-const VERSION = '0.25.2';   // increment on any shipped change; shown next to the title
+const VERSION = '0.26.0';   // increment on any shipped change; shown next to the title
+// 0.26.0: F48 - the "you are here" room label: the HUD names the room you're
+//          standing in (a quiet word, top-left of the play area), so the clue
+//          notes' room names land in the world instead of staying ghosts
 // 0.25.2: F45 - the room pulls in its temp guard REINFORCE_DELAY (4s) after the
 //          alarm trips, not on the next frame - a beat to react before it's on you
 // 0.25.1: F44 - the nook's mouth is the FULL open side and the beam runs ACROSS it

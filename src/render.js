@@ -221,6 +221,22 @@ function drawHeader() {
   }
 }
 
+// ---- the "you are here" room label: a quiet word in the top-left of the play
+// area, naming the room you're standing in. Subtle (low opacity, small) so it
+// anchors place without competing with the objective/status strip above.
+function drawRoomName() {
+  const el = document.getElementById('room-name');
+  const name = el ? el.textContent : '';
+  if (!name) return;
+  ctx.textBaseline = 'top';
+  ctx.textAlign = 'left';
+  ctx.font = '600 12px ' + FONT;
+  ctx.globalAlpha = 0.5;
+  ctx.fillStyle = '#9aa7bd';
+  ctx.fillText(name.toUpperCase(), OXX + 10, OYY + 8);
+  ctx.globalAlpha = 1;
+}
+
 // ---- minimap: the whole facility with fog-of-war occlusion ----
 // The tactical layer. Explored rooms light up; unexplored rooms stay dark, and
 // you can't see guards or objectives in a room you haven't walked. Each guard's
@@ -784,5 +800,6 @@ function render() {
 
   // ---- top strip (drawn unclipped): arcade header on the left, minimap on the right ----
   drawHeader();
+  drawRoomName();
   drawMinimap(t, range);
 }

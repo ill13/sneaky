@@ -26,6 +26,8 @@ const verEl = document.getElementById('ver');
 const menuInvEl = document.getElementById('menu-inv');
 const briefingEl = document.getElementById('briefing');   // F33: the run briefing
 const noteToastEl = document.getElementById('note-toast');   // F34: the note/clue you just read
+const roomNameEl = document.getElementById('room-name');   // the "you are here" room label
+let lastRoom = null;   // the player's current room (held while in a doorway so it doesn't flicker blank)
 if (verEl) verEl.textContent = 'v' + VERSION;   // version tracker next to the title
 // "scroll down" cue: the box is scrollable on small screens; show the bobbing
 // marker while there is more text below and hide it at the bottom
@@ -131,6 +133,13 @@ function updateHUD() {
   }
   // calm states (CLEAN / IN THE BAG / GUARD DOWN) sit still; only danger pulses
   statusEl.classList.toggle('blink', state.alarmTime > 0 || state.guards.some((g) => g.state === 'chase'));
+  // the "you are here" room label - names the room you're standing in (held while in a doorway)
+  {
+    const pc = Math.floor(p.x / TILE), pr = Math.floor(p.y / TILE);
+    const cur = roomAt(pc, pr);
+    if (cur) lastRoom = cur;
+    if (roomNameEl) roomNameEl.textContent = lastRoom ? roomName(lastRoom[0], lastRoom[1]) : '';
+  }
   // banked dead-end upgrades
   const got = UPG_TYPES.filter((t) => state.upgrades[t]).map((t) => UPGRADES[t].label);
   powerEl.textContent = got.length ? 'PWR ' + got.join(' ') : '';
