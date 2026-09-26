@@ -82,7 +82,7 @@ function loadGame() {
       hitPlayer, PLAYER_HP_START, PLAYER_HP_MAX, HIT_STAGGER,   // F46: the hit pool + health items
       stepSwitches, onCrateMoved, machineAlarm,   // F43: the floor-plate switch (occupancy + grace) + crate reaction + machine alarm
       tripAlarm, convergeGuards, CONVERGE_TIME,   // F45: the alarm lockdown (converge on the trigger tile)
-      spawnReinforcements, stepReinforcements, reinforceEntryTile, roomDoorways, REINFORCE_MAX, REINFORCE_TIME,   // F45: the temporary reinforcement spike (doorway in/out)
+      spawnReinforcements, stepReinforcements, reinforceEntryTile, roomDoorways, REINFORCE_MAX, REINFORCE_TIME, REINFORCE_DELAY,   // F45: the temporary reinforcement spike (doorway in/out, delayed)
       roomAt, reachable, solid, generateFallback, mulberry32, validateKeyChain,   // F29: the multi-key solvability proof
       crateAt, tileBlocked, tryPushCrate, tryPullCrate, pullReady, PULL_NOISE,   // F43: the pushable crate (solid + shove); F47: the pull (ACT swap)
       makeCamera, makeSwitch, makeLaser, makeRobot, makeCrate,   // F39: camera + switch; F40: laser; F42: robot; F43: crate

@@ -32,7 +32,7 @@ const state = {
   noteToast: null,       // F34: { text, t, clue } - the note/clue you just read, shown briefly
   alarmTime: 0,
   alarmPos: null,          // F45: [c, r] - the tile the alarm was triggered from (the converge target)
-  pendingReinforce: false, // F45: set by tripAlarm, consumed at the top of update() (spawn outside the guard loop)
+  pendingReinforce: 0, // F45: a countdown (sec) set by tripAlarm; the room pulls in a guard when it hits 0 (spawned at the top of update, outside the guard loop)
   gameOver: false,
   won: false,
   elapsed: 0,

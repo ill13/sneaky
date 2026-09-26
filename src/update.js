@@ -45,7 +45,7 @@ function tripAlarm() {
   state.alarmTime = alarmDuration();
   state.alarmPos = [Math.floor(state.player.x / TILE), Math.floor(state.player.y / TILE)];
   convergeGuards();
-  state.pendingReinforce = true;   // F45: the room pulls in extra guards (spawned at the top of update)
+  state.pendingReinforce = REINFORCE_DELAY;   // F45: the room pulls in extra guards after a beat (countdown, spawned at the top of update)
 }
 // F45: the room pulls in extra (temporary) guards on an alarm - the reinforcement
 // spike. They enter from the far side of the room and converge on the trigger tile.
@@ -469,8 +469,12 @@ function update(dt) {
   }
   state.elapsed += dt;
   // F45: spawn any queued reinforcements BEFORE the guard loop (never mutate
-  // state.guards mid-iteration), then let the temp guards age out.
-  if (state.pendingReinforce) { spawnReinforcements(); state.pendingReinforce = false; }
+  // state.guards mid-iteration). The room pulls them in after a REINFORCE_DELAY
+  // beat (a countdown), then they age out.
+  if (state.pendingReinforce > 0) {
+    state.pendingReinforce -= dt;
+    if (state.pendingReinforce <= 0) { spawnReinforcements(); state.pendingReinforce = 0; }
+  }
   stepReinforcements(dt);
   if (state.flash > 0) state.flash -= dt;
   if (state.spotFlash > 0) state.spotFlash = Math.max(0, state.spotFlash - dt * 2.5);

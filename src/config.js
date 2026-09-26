@@ -3,7 +3,9 @@
 //  Every knob in one place. Pure constants, no logic.
 //  Classic script: loads first, all names shared globally.
 // ============================================================
-const VERSION = '0.25.1';   // increment on any shipped change; shown next to the title
+const VERSION = '0.25.2';   // increment on any shipped change; shown next to the title
+// 0.25.2: F45 - the room pulls in its temp guard REINFORCE_DELAY (4s) after the
+//          alarm trips, not on the next frame - a beat to react before it's on you
 // 0.25.1: F44 - the nook's mouth is the FULL open side and the beam runs ACROSS it
 //          (perpendicular to the approach, emitter at a corner) - a gate at the
 //          entrance, not a line down the nook's length
@@ -63,6 +65,7 @@ const ALARM_DURATION = 10;    // seconds of unbroken hiding to clear it
 const CONVERGE_TIME = 3.0;    // F45: sec a guard sweeps AT the alarm tile after converging on it
 const REINFORCE_MAX = 1;      // F45: extra (temporary) guards the room pulls in on an alarm
 const REINFORCE_TIME = 16;    // F45: sec a reinforcement stays before it peels off (or it leaves the moment the alarm clears)
+const REINFORCE_DELAY = 4;    // F45: sec after the alarm trips before the room pulls in a guard (a beat to react)
 
 // guards shoot while chasing, close range, with line of sight
 const SHOOT_RANGE = 60;       // px - guards must be close, so a side-step breaks the shot
