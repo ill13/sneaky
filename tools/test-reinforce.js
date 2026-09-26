@@ -1,8 +1,8 @@
 // ============================================================
 //  F45 - the reinforcement spike. An alarm pulls in a temporary extra guard
-//  (capped by REINFORCE_MAX) that enters from the far side of the room and
-//  converges on the trigger. It peels off when the alarm clears or its timer
-//  runs out. Keep green.
+//  (capped by REINFORCE_MAX) that materializes at the room's doorway (nearest
+//  the trigger) and converges on it. When the alarm clears (or its timer runs
+//  out) it walks back out that same doorway and despawns. Keep green.
 // ============================================================
 const { loadGame } = require('./load-game.cjs');
 const g = loadGame();
@@ -59,7 +59,7 @@ function standIn(room) {
   ok(reinf.length <= g.REINFORCE_MAX, 'R2: reinforcements are capped at ' + g.REINFORCE_MAX + ' (got ' + reinf.length + ')');
 }
 
-// R3: the reinforcement despawns the moment the alarm clears
+// R3: the reinforcement walks back out its door when the alarm clears
 {
   g.reset(42);
   const room = roomWithGuard();
@@ -67,10 +67,19 @@ function standIn(room) {
   state.player.x = (stand[0] + 0.5) * T; state.player.y = (stand[1] + 0.5) * T;
   state.player.invuln = 999;
   g.tripAlarm(); g.update(1 / 60);
-  ok(state.guards.some((x) => x.reinforcement), 'R3: a reinforcement is present while hot');
+  const r = state.guards.find((x) => x.reinforcement);
+  ok(r, 'R3: a reinforcement is present while hot');
+  ok(r && r.entryDoor && g.roomAt(r.entryDoor[0], r.entryDoor[1]) && r.entryDoor, 'R3: it remembers the doorway it came in');
   state.alarmTime = 0;   // the coast clears
   g.update(1 / 60);
-  ok(!state.guards.some((x) => x.reinforcement), 'R3: the reinforcement peels off the moment the alarm clears');
+  ok(state.guards.some((x) => x.reinforcement && x.leaving), 'R3: it starts walking back out its door (not an instant vanish)');
+  let present = true;
+  for (let i = 0; i < 60 * 5; i++) {
+    state.alarmTime = 0;   // keep it clear so only the walk-back ends it
+    g.update(1 / 60);
+    if (!state.guards.some((x) => x.reinforcement)) { present = false; break; }
+  }
+  ok(!present, 'R3: it despawns once it is back at the doorway');
 }
 
 // R4: with the alarm kept hot, the reinforcement peels off on its own timer
@@ -82,14 +91,15 @@ function standIn(room) {
   state.player.invuln = 999;
   g.tripAlarm(); g.update(1 / 60);
   const r = state.guards.find((x) => x.reinforcement);
-  // keep the alarm hot so only the timer can end it
+  // keep the alarm hot so only the timer can end it; +6s covers the walk-back
+  // out the door after the timer fires (it's not an instant vanish anymore)
   let present = true;
-  for (let i = 0; i < 60 * (g.REINFORCE_TIME + 2); i++) {
+  for (let i = 0; i < 60 * (g.REINFORCE_TIME + 6); i++) {
     state.alarmTime = Math.max(state.alarmTime, 1);   // hold it hot
     g.update(1 / 60);
     if (!state.guards.some((x) => x.reinforcement)) { present = false; break; }
   }
-  ok(!present, 'R4: the reinforcement peels off on its timer once past ' + g.REINFORCE_TIME + 's');
+  ok(!present, 'R4: the reinforcement peels off on its timer (once past ' + g.REINFORCE_TIME + 's + the walk-back)');
 }
 
 // R5: the reinforcement is a real guard - it can path and close on the player

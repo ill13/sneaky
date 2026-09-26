@@ -3,8 +3,9 @@
 //  Every knob in one place. Pure constants, no logic.
 //  Classic script: loads first, all names shared globally.
 // ============================================================
-const VERSION = '0.24.1';   // increment on any shipped change; shown next to the title
-// 0.24.1: F45 tuning - the reinforcement converges at chase pace (arrives in ~6s, not ~9)
+const VERSION = '0.24.2';   // increment on any shipped change; shown next to the title
+// 0.24.2: F45 - the reinforcement materializes at the room's doorway and walks back
+//          out that same door when the alarm clears (not a far-corner spawn / instant vanish)
 
 const TILE = 32;
 // 3 x 3 grid of rooms: 3*16 + 2 inner walls + 2 outer = 52 cols,

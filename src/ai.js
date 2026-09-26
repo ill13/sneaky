@@ -328,6 +328,11 @@ function stepGuard(g, dt) {
       g.hearT -= dt;
       if (g.hearT <= 0) { g.state = 'investigate'; g.searchT = DISTRACT_INVESTIGATE; g.pathTiles = []; }
     }
+  } else if (g.state === 'leave') {   // F45: a reinforcement walking back out its door
+    // committed to leaving - the alarm is clear, so it doesn't re-engage. It walks
+    // back to the doorway it came in (stepReinforcements despawns it on arrival).
+    if (!g.pathTiles.length) g.pathTiles = roomPath(g, g.targetTile[0], g.targetTile[1]);
+    followPath(g, s.chaseSpeed, dt);
   } else if (g.state === 'investigate') {   // F25: lured to a wall by a distraction
     if (sees) {
       enterChase(g);

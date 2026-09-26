@@ -63,6 +63,7 @@ function spawnReinforcements() {
     const g = makeUnit('guard', 1000 + state.guards.length, makeGuard([[tile[0], tile[1]]]));
     g.x = (tile[0] + 0.5) * TILE; g.y = (tile[1] + 0.5) * TILE;
     g.reinforcement = true;
+    g.entryDoor = tile;   // F45: it leaves through the doorway it materialized in
     g.reinforceT = REINFORCE_TIME;
     g.state = 'investigate';
     g.targetTile = [state.alarmPos[0], state.alarmPos[1]];
@@ -73,11 +74,44 @@ function spawnReinforcements() {
 }
 // the entry tile: a floor tile in the room as FAR from the trigger as possible, so
 // the reinforcement walks in from the far side (a real "arriving" beat).
+// F45: the room's doorway tiles - floor tiles IN the room that sit directly
+// against a *threshold* tile (a floor tile in no room - the gap in the internal
+// wall). We spawn on the just-inside tile (not the threshold itself) so the
+// guard's room stays valid; it's the entrance, so it reads as "coming through
+// the door". A reinforcement materializes here and leaves through here.
+function roomDoorways(room) {
+  const doors = [];
+  for (let r = 0; r < state.map.length; r++) {
+    for (let c = 0; c < state.map[0].length; c++) {
+      if (state.map[r][c] !== 0) continue;
+      const rm = roomAt(c, r);
+      if (!rm || rm[0] !== room[0] || rm[1] !== room[1]) continue;
+      const nbrs = [[c + 1, r], [c - 1, r], [c, r + 1], [c, r - 1]];
+      for (const [nc, nr] of nbrs) {
+        if (state.map[nr] && state.map[nr][nc] === 0 && !roomAt(nc, nr)) { doors.push([c, r]); break; }
+      }
+    }
+  }
+  return doors;
+}
+// F45: where a reinforcement appears - the doorway NEAREST the alarm (the closest
+// entrance to the action). Falls back to the farthest floor tile if the room is
+// sealed (no doorway).
 function reinforceEntryTile(room, alarmTile) {
+  const doors = roomDoorways(room);
+  if (doors.length) {
+    let best = doors[0], bd = Infinity;
+    for (const d of doors) {
+      const dist = Math.hypot(d[0] - alarmTile[0], d[1] - alarmTile[1]);
+      if (dist < bd) { bd = dist; best = d; }
+    }
+    return best;
+  }
   let best = null, bd = -1;
-  const ox = 1 + room[0] * 17, oy = 1 + room[1] * 11;
-  for (let r = oy + 1; r < oy + 10; r++) for (let c = ox + 1; c < ox + 16; c++) {
+  for (let r = 0; r < state.map.length; r++) for (let c = 0; c < state.map[0].length; c++) {
     if (state.map[r][c] !== 0) continue;
+    const rm = roomAt(c, r);
+    if (!rm || rm[0] !== room[0] || rm[1] !== room[1]) continue;
     const d = Math.hypot(c - alarmTile[0], r - alarmTile[1]);
     if (d > bd) { bd = d; best = [c, r]; }
   }
@@ -91,7 +125,18 @@ function stepReinforcements(dt) {
     const g = state.guards[i];
     if (!g.reinforcement) continue;
     g.reinforceT -= dt;
-    if (alarmClear || g.reinforceT <= 0) state.guards.splice(i, 1);
+    if (!(alarmClear || g.reinforceT <= 0)) continue;
+    if (!g.leaving) {
+      // the coast is clear (or its time is up): start the walk-back out its door
+      g.leaving = true;
+      g.state = 'leave';
+      g.targetTile = g.entryDoor;
+      g.pathTiles = [];
+      continue;
+    }
+    // leaving: it despawns once it's back at the doorway it came in
+    const dx = g.x - (g.entryDoor[0] + 0.5) * TILE, dy = g.y - (g.entryDoor[1] + 0.5) * TILE;
+    if (Math.hypot(dx, dy) < TILE) state.guards.splice(i, 1);
   }
 }
 // F45: every awake mobile guard in the alarm's room heads to the trigger tile and

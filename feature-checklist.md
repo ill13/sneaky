@@ -1826,9 +1826,11 @@ being iterated.
 - [x] **`convergeGuards()`** - room-confined; each eligible guard gets the trigger tile as its
       investigate target (A* path). Machines, down/hidden/dazed, asleep, chasing, and out-of-room
       guards are skipped.
-- [x] **`spawnReinforcements()` / `stepReinforcements()` / `reinforceEntryTile()`** - the temp
-      guard spawns on a far floor tile in the alarm room, converges on the alarm tile, and
-      despawns on alarm-clear or timeout. `REINFORCE_MAX = 1`, `REINFORCE_TIME = 16s`.
+- [x] **`spawnReinforcements()` / `stepReinforcements()` / `reinforceEntryTile()` / `roomDoorways()`**
+      - the temp guard materializes at the room's **doorway** (the just-inside tile nearest the
+      trigger), converges on the alarm tile, and when the alarm clears (or its timer runs) it
+      **walks back out that same door** and despawns on arrival. `REINFORCE_MAX = 1`,
+      `REINFORCE_TIME = 16s`. A `leave` state in the guard AI handles the walk-back.
 - [x] **Tests (tools/test-converge.js, 6; tools/test-reinforce.js, 7).** Converge targets the
       trigger tile, skips machines/asleep/chasing, is room-confined; the reinforcement spawns in
       the alarm room, is temporary, and despawns on alarm-clear.
