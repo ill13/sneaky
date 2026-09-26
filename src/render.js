@@ -423,13 +423,18 @@ function render() {
     for (let c = c0; c <= c1; c++) {
       const x = fx(c * TILE), y = fy(r * TILE), v = state.map[r][c];
       if (TILE_ATLAS.loaded) {
-        // bitmap tile (F49): pick the atlas cell and blit it to S x S, nearest-neighbor
+        // bitmap tile (F49): blit the atlas cell, nearest-neighbor. Snap the dest to the
+        // device-pixel grid and size it to the EXACT gap to the next tile's snapped edge,
+        // so adjacent tiles abut with no black seam (a fractional S would round each tile
+        // short and leave 1px gaps).
+        const x2 = Math.round(x), y2 = Math.round(y);
+        const w2 = Math.round(fx((c + 1) * TILE)) - x2, h2 = Math.round(fy((r + 1) * TILE)) - y2;
         ctx.imageSmoothingEnabled = false;
         const cell = v === 1 ? TILE_ATLAS.wall : v === 2 ? TILE_ATLAS.door : TILE_ATLAS.floor;
-        ctx.drawImage(TILE_ATLAS.img, cell.x, cell.y, cell.w, cell.h, x, y, S, S);
+        ctx.drawImage(TILE_ATLAS.img, cell.x, cell.y, cell.w, cell.h, x2, y2, w2, h2);
         if (v === 0) {   // the tileset floor is neutral gray - a soft rust cast ties it to the walls
           ctx.fillStyle = 'rgba(120,80,50,0.12)';
-          ctx.fillRect(x, y, S, S);
+          ctx.fillRect(x2, y2, w2, h2);
         }
       } else if (v === 1) {
         ctx.fillStyle = '#3d4454';

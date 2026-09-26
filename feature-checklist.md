@@ -1969,6 +1969,15 @@ the pixels stay hard-edged at any `SCALE`. The vector fills stay as the no-asset
 
 Full suite green: 29 headless.
 
+**0.27.1 - the floor, made seamless.** The first atlas cropped a tileset floor tile that was
+half-transparent down the middle, so it tiled into a "brick" pattern with black gaps. Two fixes:
+the blit now **snaps to the device-pixel grid** and sizes each tile to the exact gap to the next
+(so fractional `SCALE` can't leave a 1px seam), and the floor is now a **generated seamless 2x2
+checker** in the sheet's gray palette (no baked border, no transparency) with a soft rust cast on
+top. The wall (generated rust) and the hatch door (cropped from the sheet) are unchanged.
+
+Full suite green: 29 headless.
+
 ---
 
 ## Carryovers (open from before)
