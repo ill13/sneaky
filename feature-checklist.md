@@ -1978,6 +1978,36 @@ top. The wall (generated rust) and the hatch door (cropped from the sheet) are u
 
 Full suite green: 29 headless.
 
+### 0.28.0 - Walls that read as walls: the 4-bit autotile (F50)
+
+The flat rust wall tile was the last thing in the facility that didn't look built. A wall is not a
+flat square - it has a top you can see and a face that falls away toward the room, and a corner
+turns. F50 draws walls with the classic **4-bit autotile / terrain-mask** scheme (the same one
+Godot's TileMap terrain mode runs on): each wall tile computes a mask from its four neighbors -
+which of N/E/S/W are also walls - and blits the matching piece from a 16-slot atlas. The pieces
+are generated "raised tiles": a cap (the top face) as the base, with a darker face band on every
+edge that faces floor. Because the cap is a uniform base and each face band sits exactly on the
+floor-facing edge, straight runs, corners, T-junctions and isolated pillars all abut with no seam
+and no hand-placed variant - the geometry does the work.
+
+- [x] **`assets/walls.png`** - a 64x64 atlas of 16 raised-tile pieces (4x4 grid, 16px each),
+      generated from the derelict cap/face palette (cap `[123,96,77]`, face `[104,69,59]`, crease
+      `[74,43,43]`). Slot `i` is mask `i`: bits N=1 E=2 S=4 W=8, a bit set means that neighbor is
+      a wall. Slot 0 (all floor around) is a pillar with face bands on all four edges; slot 15 (all
+      walls) is pure cap. Ships at ~1KB; the source pack stays gitignored.
+- [x] **`WALL_ATLAS` loader (render.js)** - async `new Image()`, `onload` flips `loaded`, a
+      `try/catch` keeps the headless stub and a missing file on the vector wall fill. `tile(mask)`
+      maps a mask to its atlas cell.
+- [x] **Mask in the tile loop** - the `v === 1` branch now builds the 4-bit mask from
+      `state.map` neighbors (out-of-bounds counts as floor) and blits the autotile piece when
+      `WALL_ATLAS.loaded`; the flat fill is the `else`. Floor and doors keep using the main atlas.
+      The minimap stays flat (a small overview doesn't need the relief).
+- [x] **Verified in-browser** (debug Chrome over `http://`, seed 42): walls render with the cap on
+      the outer edge and the face falling toward each room; corners wrap the outer angle; runs are
+      seamless. Vector fallback unchanged for `file://` / headless.
+
+Full suite green: 29 headless.
+
 ---
 
 ## Carryovers (open from before)

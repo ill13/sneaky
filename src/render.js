@@ -27,6 +27,21 @@ try {
   _atlasImg.onload = () => { TILE_ATLAS.img = _atlasImg; TILE_ATLAS.loaded = true; };
   _atlasImg.src = 'assets/tiles.png';
 } catch (e) { /* headless / no DOM: stay on the vector fills */ }
+
+// F50 wall autotiles: 16 raised-tile pieces (one per 4-bit neighbor mask), generated
+// from the derelict cap/face palette. A wall's mask (N=1 E=2 S=4 W=8) marks which
+// neighbors are ALSO walls; the matching piece draws a face band on every edge that
+// faces floor and cap elsewhere, so straight runs, corners, T-junctions and isolated
+// pillars all connect seamlessly (the classic 4-bit autotile / terrain-mask scheme).
+const WALL_ATLAS = {
+  img: null, loaded: false,
+  tile: function (mask) { return { x: (mask % 4) * 16, y: (mask >> 2) * 16, w: 16, h: 16 }; },
+};
+try {
+  const _wallImg = new Image();
+  _wallImg.onload = () => { WALL_ATLAS.img = _wallImg; WALL_ATLAS.loaded = true; };
+  _wallImg.src = 'assets/walls.png';
+} catch (e) { /* headless / no DOM: stay on the vector fills */ }
 // hex (#rrggbb) -> rgba() string with an alpha channel (the key-color door tint)
 function hexA(hex, a) {
   const n = parseInt(hex.slice(1), 16);
@@ -430,11 +445,21 @@ function render() {
         const x2 = Math.round(x), y2 = Math.round(y);
         const w2 = Math.round(fx((c + 1) * TILE)) - x2, h2 = Math.round(fy((r + 1) * TILE)) - y2;
         ctx.imageSmoothingEnabled = false;
-        const cell = v === 1 ? TILE_ATLAS.wall : v === 2 ? TILE_ATLAS.door : TILE_ATLAS.floor;
-        ctx.drawImage(TILE_ATLAS.img, cell.x, cell.y, cell.w, cell.h, x2, y2, w2, h2);
-        if (v === 0) {   // the tileset floor is neutral gray - a soft rust cast ties it to the walls
-          ctx.fillStyle = 'rgba(120,80,50,0.12)';
-          ctx.fillRect(x2, y2, w2, h2);
+        if (v === 1 && WALL_ATLAS.loaded) {
+          // autotile wall: pick the piece from the 4-bit wall-neighbor mask
+          const nW = r > 0     && state.map[r - 1][c] === 1 ? 1 : 0;
+          const eW = c < COLS - 1 && state.map[r][c + 1] === 1 ? 2 : 0;
+          const sW = r < ROWS - 1 && state.map[r + 1][c] === 1 ? 4 : 0;
+          const wW = c > 0     && state.map[r][c - 1] === 1 ? 8 : 0;
+          const cell = WALL_ATLAS.tile(nW | eW | sW | wW);
+          ctx.drawImage(WALL_ATLAS.img, cell.x, cell.y, cell.w, cell.h, x2, y2, w2, h2);
+        } else {
+          const cell = v === 1 ? TILE_ATLAS.wall : v === 2 ? TILE_ATLAS.door : TILE_ATLAS.floor;
+          ctx.drawImage(TILE_ATLAS.img, cell.x, cell.y, cell.w, cell.h, x2, y2, w2, h2);
+          if (v === 0) {   // the tileset floor is neutral gray - a soft rust cast ties it to the walls
+            ctx.fillStyle = 'rgba(120,80,50,0.12)';
+            ctx.fillRect(x2, y2, w2, h2);
+          }
         }
       } else if (v === 1) {
         ctx.fillStyle = '#3d4454';
