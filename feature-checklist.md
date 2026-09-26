@@ -1807,6 +1807,34 @@ Full suite green: 24 headless, nook + beam render verified (live + dormant).
 
 ---
 
+### 0.25.0 - The laser nook is a directional setpiece (F44)
+
+The nook + laser are **one setpiece of various sizes and directions**, not a fixed
+right-facing box. `NOOK` is now parameterized by the box's top-left (`ox, oy`), its size
+(`w, h`), and the mouth side (`'left' | 'right' | 'top' | 'bottom'`). Everything else - the
+mouth tile, the emitter (on the mouth), the bowl (on the far side), the approach (outside
+the mouth), and the beam direction - **derives** from those. The beam always spans the nook
+(mouth -> bowl) and is just long enough to cover the box (`nookBeamLen`), so the hit-test
+matches the visible beam at any size/orientation. The current demo keeps the right-facing
+4x3 nook (identical derived values), so nothing about the shipped level changes - this is
+the generalization that lets a future authored level put a nook anywhere, any size, any way.
+
+- [x] **`NOOK` parameterized (content.js).** `ox, oy, w, h, mouthSide` + a derive step that
+      computes `mouth`, `emitter`, `bowl`, `approach`, `beamDir`, and the box bounds
+      (`c0, c1, r0, r1`). Centering uses `Math.floor` so the mouth always lands on an
+      integer tile for any box size.
+- [x] **`carveNook` lays all four walls, then opens the derived mouth** (was: three walls,
+      right open). `nookEmitter` / `nookTiles` / `patClearsNook` read the derived bounds.
+- [x] **`nookBeamLen` (mapgen.js).** `(w-1)` tiles for a left/right mouth, `(h-1)` for a
+      top/bottom mouth - just long enough to span the box. `makeLaser` takes a `beamLen`
+      (defaults to `LASER_RANGE`); the game wires the nook's derived dir + len.
+- [x] **Verified directional.** A `bottom` mouth re-derives to a north beam, opens the
+      bottom tile, drops the gold key in the bowl on the beam, and keeps it in the key chain.
+
+Full suite green: 28 headless.
+
+---
+
 ### 0.24.0 - Alarm converge + reinforcements (F45), the hit pool (F46), the pull (F47)
 
 Three systems that make the alarm and the player's body feel real.

@@ -42,20 +42,40 @@ const KEYS = [
   { id: 'gold',  color: '#ffd23f', name: 'GOLD',  room: [0, 1], doorSec: 2, pool: [[1, 8], [14, 8], [7, 9]] },     // opens F-I (dead end I)
   { id: 'red',   color: '#ff5a5a', name: 'RED',   room: [1, 1], doorSec: 1, pool: [[1, 8], [14, 8], [7, 9]] },     // opens E-H (vault H / file)
 ];
-// F44: the laser nook in room D - a box missing one side (the mouth), with the
-// gold key's container in the bowl and the laser emitter sitting on the mouth,
-// beam pointing IN (across the nook, mouth -> bowl). You time the beam's
-// off-window to slip in, grab the key, and get out before it re-arms.
-// Room-relative tiles in D (16 wide x 10 tall).
+// F44: the laser nook - a DIRECTIONAL setpiece. A box (walled on three sides)
+// with a mouth on one side, the gold key's bowl inside on the far side, and a
+// laser emitter on the mouth whose beam spans the nook (mouth -> bowl). The
+// mouth can face any way and the box can be any size - the mouth tile, emitter,
+// bowl, approach, and beam direction all derive from (ox, oy, w, h, mouthSide).
+// Room-relative coords in its room. You time the beam's off-window to slip in,
+// grab the key, and get out before it re-arms.
 const NOOK = {
-  room: [0, 1],               // D - the gold key's room
-  c0: 1, c1: 4, r0: 7, r1: 9, // the box (4 wide x 3 tall), missing its right side
-  mouth: [4, 8],              // the open tile (right-middle) - the only entrance
-  bowl: [2, 8],               // the container tile (the gold key)
-  emitter: [4, 8],            // the laser emitter, on the mouth, beam pointing in
-  facing: Math.PI,            // west - the beam spans the nook (mouth -> bowl), across the entrance
-  approach: [5, 8],           // the floor tile outside the mouth (where you stand)
+  room: [0, 1],         // D - the gold key's room
+  ox: 1, oy: 7,         // the box's top-left corner (room-relative)
+  w: 4, h: 3,           // the box size (tiles)
+  mouthSide: 'right',   // the open side: 'left' | 'right' | 'top' | 'bottom'
 };
+// derive the mouth / emitter / bowl / approach / beam direction + box bounds.
+// Centering uses Math.floor so the mouth always lands on an integer tile, for
+// any box size.
+(function () {
+  const { ox, oy, w, h, mouthSide } = NOOK;
+  NOOK.c0 = ox; NOOK.c1 = ox + w - 1; NOOK.r0 = oy; NOOK.r1 = oy + h - 1;
+  const cc = ox + Math.floor((w - 1) / 2);   // the box's center column (integer)
+  const cr = oy + Math.floor((h - 1) / 2);   // the box's center row (integer)
+  let m, bowl, app, dir;
+  switch (mouthSide) {
+    case 'right':  m = [ox + w - 1, cr]; bowl = [ox + 1, cr];        app = [m[0] + 1, m[1]]; dir = Math.PI; break;      // beam west
+    case 'left':   m = [ox, cr];         bowl = [ox + w - 2, cr];    app = [m[0] - 1, m[1]]; dir = 0; break;            // beam east
+    case 'top':    m = [cc, oy];         bowl = [cc, oy + 1];        app = [m[0], m[1] - 1];  dir = Math.PI / 2; break;  // beam south
+    case 'bottom': m = [cc, oy + h - 1]; bowl = [cc, oy + h - 2];    app = [m[0], m[1] + 1];  dir = -Math.PI / 2; break; // beam north
+  }
+  NOOK.mouth = m;        // the open tile - the only entrance
+  NOOK.emitter = m;      // the laser emitter sits on the mouth
+  NOOK.bowl = bowl;      // the gold key's container (on the far side, on the beam)
+  NOOK.approach = app;   // the floor tile outside the mouth (where you stand)
+  NOOK.beamDir = dir;    // the beam spans the nook (mouth -> bowl), across the entrance
+})();
 // Locked door tiles for bottom-row section cc on wall y=22 (a 2-tile block at
 // room-relative cols 5,6 - the offset the vault door used) plus the tiles to
 // stand on (upper room side) to touch the door.

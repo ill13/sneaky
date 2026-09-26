@@ -145,7 +145,7 @@ function makeCrate(c, r) {
 // projects a beam (a line-segment), blinking on/off. `asleep` = dormant (beam off);
 // `!asleep` = live (beam on). `beamDir`/`beamLen` define the segment. No switch -
 // its defense is pure timing.
-function makeLaser(c, r, facing) {
+function makeLaser(c, r, facing, beamLen) {
   const x = (c + 0.5) * TILE, y = (r + 0.5) * TILE;
   return {
     x, y,
@@ -154,8 +154,8 @@ function makeLaser(c, r, facing) {
     room: roomAt(c, r),
     laser: true,          // render as a beam emitter
     machine: true,        // non-knockable, non-distractable
-    beamDir: facing,      // the beam's direction
-    beamLen: LASER_RANGE, // how far the beam reaches
+    beamDir: facing,      // the beam's direction (the nook derives this)
+    beamLen: beamLen || LASER_RANGE, // how far the beam reaches (the nook spans its box)
     beamHit: false,       // is the player in the beam right now (render cue)
     dutyT: 0,             // the duty-cycle phase timer (starts live)
     asleep: false,        // false = live (beam on); true = dormant (beam off)

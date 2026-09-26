@@ -451,15 +451,21 @@ function crateRow(m, camSw, robotPos, containers) {
   return out;
 }
 
-// F44: carve the laser nook in room D - a box missing its right side (the mouth).
-// Only the top, bottom, and left walls are laid; the right side stays open, so the
-// mouth (right-middle) is the single entrance. Deterministic.
+// F44: carve the laser nook in room D - a box walled on all four sides, with the
+// derived mouth tile opened (the single entrance on the mouth side). Directional:
+// the box size and mouth side come from NOOK. Deterministic.
 function carveNook(m) {
   const [ox, oy] = roomOrigin(NOOK.room[0], NOOK.room[1]);
   const { c0, c1, r0, r1 } = NOOK;
   for (let c = c0; c <= c1; c++) { m[oy + r0][ox + c] = 1; m[oy + r1][ox + c] = 1; }   // top + bottom
-  for (let r = r0; r <= r1; r++) m[oy + r][ox + c0] = 1;                              // left
-  m[oy + NOOK.mouth[1]][ox + NOOK.mouth[0]] = 0;   // the mouth stays open
+  for (let r = r0; r <= r1; r++) { m[oy + r][ox + c0] = 1; m[oy + r][ox + c1] = 1; }   // left + right
+  m[oy + NOOK.mouth[1]][ox + NOOK.mouth[0]] = 0;   // open the mouth (the derived tile)
+}
+// F44: the beam length - just long enough to span the nook box (mouth -> far
+// wall), so the hit-test matches the visible beam for any size/orientation.
+function nookBeamLen() {
+  const horiz = NOOK.mouthSide === 'left' || NOOK.mouthSide === 'right';
+  return (horiz ? (NOOK.w - 1) : (NOOK.h - 1)) * TILE;
 }
 // F44: every nook tile (the box - walls + interior - plus the approach tile), so
 // obstacles and random containers keep clear of it.
@@ -471,10 +477,10 @@ function nookTiles() {
   t.push([ox + approach[0], oy + approach[1]]);
   return t;
 }
-// F44: the laser emitter's absolute tile - it sits on the nook's mouth, so the
-// beam (facing in, across the nook) spans the entrance and gates the bowl. The
-// laser always lives in D (the nook's room), so this replaces the old free-tile
-// laser placement.
+// F44: the laser emitter's absolute tile - it sits on the nook's derived mouth,
+// so the beam (spanning the nook, mouth -> bowl) gates the entrance. The laser
+// always lives in D (the nook's room), so this replaces the old free-tile laser
+// placement.
 function nookEmitter() {
   const [ox, oy] = roomOrigin(NOOK.room[0], NOOK.room[1]);
   return [ox + NOOK.emitter[0], oy + NOOK.emitter[1]];

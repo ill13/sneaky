@@ -3,7 +3,10 @@
 //  Every knob in one place. Pure constants, no logic.
 //  Classic script: loads first, all names shared globally.
 // ============================================================
-const VERSION = '0.24.3';   // increment on any shipped change; shown next to the title
+const VERSION = '0.25.0';   // increment on any shipped change; shown next to the title
+// 0.25.0: F44 - the laser nook is now a DIRECTIONAL setpiece: box size + mouth side
+//          are params, and the mouth/emitter/bowl/approach/beam all derive. The beam
+//          always spans the nook (mouth -> bowl) and is just long enough to cover it.
 // 0.24.3: F44 - the laser beam points IN (west, across the nook) so it spans the
 //          entrance and gates the bowl, not out into the room along the approach
 // 0.24.2: F45 - the reinforcement materializes at the room's doorway and walks back
