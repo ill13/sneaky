@@ -10,6 +10,11 @@
 _trash/
 tools/_trash/
 
+# --- source art pack (the full Minifantasy sheet; we ship only the cropped atlas) ---
+# The runtime needs just assets/tiles.png. The 3MB source pack (creatures, props,
+# full tileset) stays local for re-cropping, it does not ship.
+Minifantasy_Scifi_SpaceDerelict_Assets/
+
 # --- captured screenshots (dev artifacts, ~8M of PNGs) ---
 # Covers tools/screenshots/ and the top-level screenshots/ dir.
 # Docs reference these by filename only (no image links), so nothing breaks.

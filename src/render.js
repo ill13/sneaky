@@ -10,6 +10,29 @@
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 
+// F49 tile atlas: the Minifantasy Sci-Fi Space Derelict sheet, cropped to a 64x64
+// atlas (floor/wall 16px, doors 32px). Native 16px -> our 32px world tile at a clean
+// 2x. Loaded async; the vector fills below stay as the no-asset fallback (file://
+// without the image, and the headless stub, where `new Image()` throws and we keep
+// the flat fills). Nearest-neighbor so the pixel art stays hard-edged when scaled.
+const TILE_ATLAS = {
+  img: null, loaded: false,
+  floor:    { x: 0,  y: 0,  w: 16, h: 16 },
+  wall:     { x: 16, y: 0,  w: 16, h: 16 },
+  door:     { x: 0,  y: 16, w: 32, h: 32 },
+  doorOpen: { x: 32, y: 16, w: 32, h: 32 },   // kept for future; opened doors use floor + lintel today
+};
+try {
+  const _atlasImg = new Image();
+  _atlasImg.onload = () => { TILE_ATLAS.img = _atlasImg; TILE_ATLAS.loaded = true; };
+  _atlasImg.src = 'assets/tiles.png';
+} catch (e) { /* headless / no DOM: stay on the vector fills */ }
+// hex (#rrggbb) -> rgba() string with an alpha channel (the key-color door tint)
+function hexA(hex, a) {
+  const n = parseInt(hex.slice(1), 16);
+  return 'rgba(' + ((n >> 16) & 255) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + a + ')';
+}
+
 const WORLD_W = COLS * TILE, WORLD_H = ROWS * TILE;
 let cssW = 640, cssH = 480, SCALE = 1, OXX = 0, OYY = 0, camX = 0, camY = 0, DPR = 1;
 let VIEW_WW = 30 * TILE, VIEW_WH = 20 * TILE;  // camera window (world px), set in fitCanvas
@@ -399,7 +422,16 @@ function render() {
   for (let r = r0; r <= r1; r++) {
     for (let c = c0; c <= c1; c++) {
       const x = fx(c * TILE), y = fy(r * TILE), v = state.map[r][c];
-      if (v === 1) {
+      if (TILE_ATLAS.loaded) {
+        // bitmap tile (F49): pick the atlas cell and blit it to S x S, nearest-neighbor
+        ctx.imageSmoothingEnabled = false;
+        const cell = v === 1 ? TILE_ATLAS.wall : v === 2 ? TILE_ATLAS.door : TILE_ATLAS.floor;
+        ctx.drawImage(TILE_ATLAS.img, cell.x, cell.y, cell.w, cell.h, x, y, S, S);
+        if (v === 0) {   // the tileset floor is neutral gray - a soft rust cast ties it to the walls
+          ctx.fillStyle = 'rgba(120,80,50,0.12)';
+          ctx.fillRect(x, y, S, S);
+        }
+      } else if (v === 1) {
         ctx.fillStyle = '#3d4454';
         ctx.fillRect(x, y, S, S);
         ctx.fillStyle = '#2c313d';
@@ -526,7 +558,9 @@ function render() {
     if (state.doorsOpen[k.id]) continue;
     for (const [c, r] of state.doorTiles[k.id]) {
       const x = fx(c * TILE), y = fy(r * TILE);
-      ctx.fillStyle = k.color;
+      // color-coded by key (F29). Over the bitmap hatch door this is a translucent tint
+      // so the art shows through with a color cast; over the vector door it stays solid.
+      ctx.fillStyle = TILE_ATLAS.loaded ? hexA(k.color, 0.5) : k.color;
       ctx.fillRect(x + 1, y + 1, S - 2, S - 2);
       ctx.fillStyle = '#0e1116';
       ctx.fillRect(x + S / 2 - 3 * SCALE, y + S / 2 - 4 * SCALE, 6 * SCALE, 8 * SCALE);   // keyhole slot

@@ -3,7 +3,7 @@
 //  Every knob in one place. Pure constants, no logic.
 //  Classic script: loads first, all names shared globally.
 // ============================================================
-const VERSION = '0.26.0';   // increment on any shipped change; shown next to the title
+const VERSION = '0.27.0';   // increment on any shipped change; shown next to the title
 // 0.26.0: F48 - the "you are here" room label: the HUD names the room you're
 //          standing in (a quiet word, top-left of the play area), so the clue
 //          notes' room names land in the world instead of staying ghosts

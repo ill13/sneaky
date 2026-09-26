@@ -1937,6 +1937,38 @@ the others (a crate in front = pull; a bin in front = search). The push's head-o
 
 Full suite green: 28 headless, 13 touch, 14 mobile.
 
+### 0.27.0 - Bitmap tiles from the Minifantasy derelict sheet (F49)
+
+The flat `fillRect` tiles are gone. The facility now renders from a real pixel-art sheet - the
+**Minifantasy Sci-Fi Space Derelict** tileset (16x16 native), cropped to a 64x64 atlas that maps
+1:1 onto our 32px world tile at a clean 2x. Nearest-neighbor (`imageSmoothingEnabled = false`) so
+the pixels stay hard-edged at any `SCALE`. The vector fills stay as the no-asset fallback, so
+`file://` without the image and the headless stub render exactly as before.
+
+- [x] **`assets/tiles.png`** - the cropped atlas: floor (a clean, uniform checkered tile, tinted a
+      soft rust at draw time to tie it to the walls), wall (a solid rust tile with a top bevel and
+      bottom edge - generated from the sheet's palette because the sheet's walls are detailed
+      segments that don't tile seamlessly), locked door (a 32x32 hatch-door panel), and an open-door
+      cell (floor + lintel + jambs, kept for future use; opened doors draw floor + the existing
+      lintel today).
+- [x] **`TILE_ATLAS` loader (render.js)** - loads the atlas async; on `onload` flips `loaded`. A
+      `try/catch` around `new Image()` means the headless stub (no DOM) and a missing file both fall
+      back to the vector fills with no error.
+- [x] **Bitmap tile blit** - the floor/wall/door `fillRect` block becomes an atlas `drawImage` when
+      `TILE_ATLAS.loaded`, with the original fills as the `else` branch. A 12% rust cast is laid over
+      the neutral tileset floor.
+- [x] **Key-color door coding preserved (F29)** - the locked-door loop now paints the key color as a
+      50% alpha tint over the hatch door (solid when on the vector fallback), so blue/gold/red doors
+      still read by color while the art shows through. The dark keyhole slot is unchanged.
+- [x] **`.gitignore`** - the 3MB source pack (`Minifantasy_Scifi_SpaceDerelict_Assets/`) stays local
+      for re-cropping; only the 640-byte `assets/tiles.png` ships.
+- [x] **Verified in-browser** (debug Chrome over `http://`, seed 42): floor/wall/door render, the
+      blue hatch door carries its color cast, no tiling artifacts. The `file://` canvas is tainted by
+      the cross-origin image (expected; blocks `toDataURL` only, not display), so live captures are
+      taken over a same-origin `http://` server.
+
+Full suite green: 29 headless.
+
 ---
 
 ## Carryovers (open from before)
