@@ -2008,6 +2008,16 @@ and no hand-placed variant - the geometry does the work.
 
 Full suite green: 29 headless.
 
+**0.28.1 - the faces get their detail back.** The first autotiles were flat cap + face bands -
+correct geometry, no soul. The derelict walls earn their pseudo-3D look from the *face* artwork:
+a beveled panel with divisions and the little indicator lights. 0.28.1 rebuilds the atlas from a
+real tileset face tile. The cap is still the base, but each floor-facing edge now carries an 11px
+detailed face band (bevel + panel lines + lights) taken from the sheet, flipped for the south edge
+and rotated for the east/west edges so the panels stay upright in every orientation. The tall face
+band is what reads as depth - a thin band looked like a border, an 11px panel looks like a wall.
+
+Full suite green: 29 headless.
+
 ---
 
 ## Carryovers (open from before)
