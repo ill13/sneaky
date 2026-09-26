@@ -2018,6 +2018,16 @@ band is what reads as depth - a thin band looked like a border, an 11px panel lo
 
 Full suite green: 29 headless.
 
+**0.28.2 - real tiles, not generated ones.** Research (Red Blob Games' autotiling guide) surfaced
+the thing 0.28.1 got wrong: a tile *generated* from cap + face bands can't draw the pseudo-3D
+corner correctly - the bevel where two faces meet is hand-authored art, not something you can
+composite from a flat band. 0.28.2 stops generating and pulls the actual derelict wall tiles out
+of the premade scene: one clean tile per orientation (interior, no props/doors), 16 of them, laid
+out so the slot index is the wall mask render.js already computes. The corners, bevels, and cap
+wrap come from the source art instead of a formula. Vector fallback unchanged.
+
+Full suite green: 29 headless.
+
 ---
 
 ## Carryovers (open from before)
