@@ -84,6 +84,7 @@ function loadGame() {
       crateAt, tileBlocked, tryPushCrate,   // F43: the pushable crate (solid + shove)
       makeCamera, makeSwitch, makeLaser, makeRobot, makeCrate,   // F39: camera + switch; F40: laser; F42: robot; F43: crate
       KEYS, doorSecTiles, doorSecApproach,   // F29: the colored key/door table + helpers
+      NOOK, nookEmitter, carveNook, patClearsNook,   // F44: the laser nook (geometry + carving + lane filter)
       SOLUTION_PATH, UPG_TYPES, UPGRADES, WALL_PLAN, DEAD_ENDS,
       CONTAINER_TYPES, NOTE_TEXTS, UPG_ROOMS, OBJECTIVE, containersPerRoom,   // F33: container archetypes + item content
       THEME, buildBriefing, SEARCH_NOISE, SEARCH_RANGE, roomName, clueText,   // F33: the theme layer + search tuning

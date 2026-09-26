@@ -233,7 +233,9 @@ check('every room has 2-3 containers + 3-5 obstacle shapes (interior solid 4-24)
       let t = 0;
       for (let r = oy; r < oy + 10; r++) for (let c = ox; c < ox + 16; c++) if (L.map[r][c] === 1) t++;
       assert.ok(byRoom[key] >= 2 && byRoom[key] <= 3, 'seed ' + s + ' room ' + key + ' has ' + byRoom[key] + ' containers');
-      assert.ok(t >= 4 && t <= 24, 'seed ' + s + ' room ' + key + ' has ' + t + ' interior solid tiles');
+      // F44: room D has the laser nook (9 wall tiles) on top of its obstacles
+      const cap = (rc === 0 && rr === 1) ? 33 : 24;
+      assert.ok(t >= 4 && t <= cap, 'seed ' + s + ' room ' + key + ' has ' + t + ' interior solid tiles');
     }
   }
 });

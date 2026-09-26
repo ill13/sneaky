@@ -42,6 +42,19 @@ const KEYS = [
   { id: 'gold',  color: '#ffd23f', name: 'GOLD',  room: [0, 1], doorSec: 2, pool: [[1, 8], [14, 8], [7, 9]] },     // opens F-I (dead end I)
   { id: 'red',   color: '#ff5a5a', name: 'RED',   room: [1, 1], doorSec: 1, pool: [[1, 8], [14, 8], [7, 9]] },     // opens E-H (vault H / file)
 ];
+// F44: the laser nook in room D - a box missing one side (the mouth), with the
+// gold key's container in the bowl and the laser emitter sitting on the mouth,
+// beam pointing out. You time the beam's off-window to slip in, grab the key,
+// and get out before it re-arms. Room-relative tiles in D (16 wide x 10 tall).
+const NOOK = {
+  room: [0, 1],               // D - the gold key's room
+  c0: 1, c1: 4, r0: 7, r1: 9, // the box (4 wide x 3 tall), missing its right side
+  mouth: [4, 8],              // the open tile (right-middle) - the only entrance
+  bowl: [2, 8],               // the container tile (the gold key)
+  emitter: [4, 8],            // the laser emitter, on the mouth, beam pointing out
+  facing: 0,                  // east - the beam reaches out through the mouth
+  approach: [5, 8],           // the floor tile outside the mouth (where you stand)
+};
 // Locked door tiles for bottom-row section cc on wall y=22 (a 2-tile block at
 // room-relative cols 5,6 - the offset the vault door used) plus the tiles to
 // stand on (upper room side) to touch the door.
@@ -176,7 +189,8 @@ const CONTAINER_TYPES = {
 const containersPerRoom = (rc, rr) => {
   const isKey = KEYS.some((k) => k.room[0] === rc && k.room[1] === rr);
   const isObj = rc === ROLE.file[0] && rr === ROLE.file[1];
-  return (isKey || isObj) ? 3 : 2;
+  const isNook = rc === NOOK.room[0] && rr === NOOK.room[1];   // F44: D also gets a forced nook-bowl container
+  return (isKey || isObj) ? (isNook ? 2 : 3) : 2;
 };
 // the objective item (themable): the thing you steal from the vault room
 const OBJECTIVE = { id: 'objective', role: 'objective' };

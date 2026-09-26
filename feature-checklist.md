@@ -1771,6 +1771,40 @@ stepping on it: the machine stays down for as long as the crate sits there, no t
 
 Full suite green: 23 headless, clean browser boot (no JS errors), crate + plate render verified.
 
+### 0.23.0 - Laser nook (F44): the beam gates a key
+
+The laser stops being a hazard you route around and becomes a **gate**: a small walled
+sub-room in room D - a box missing one side (the mouth) - with the **gold key's** container
+in the bowl and the laser emitter sitting on the mouth, beam pointing out. You time the
+beam's off-window to slip through the mouth, search the bowl, and get out before it
+re-arms. The beam covers the mouth and the approach outside it, so the only way in is
+through the beam; the interior (west of the emitter) stays clear of it. The gold key was
+already in D; now it's the one key that's a timing puzzle instead of a search.
+
+- [x] **The nook geometry (content.js `NOOK`).** A room-relative box in D (4 wide x 3 tall)
+      missing its right side: `mouth` (the open entrance), `bowl` (the container tile),
+      `emitter` (on the mouth, beam out), `approach` (the floor tile outside the mouth).
+- [x] **Carving (mapgen.js `carveNook`).** Lays the top, bottom, and left walls; the right
+      side stays open, so the mouth is the single entrance. Called once per layout (main +
+      fallback).
+- [x] **The gold key's container is the bowl (forced).** D's random container count drops by
+      one (the bowl is its third); a container is placed at the bowl and `assignContainerContents`
+      gives the gold key to it (marked used, so nothing else reuses it). Deterministic.
+- [x] **The laser on the mouth (`nookEmitter`).** Replaces the old free-tile `placeLaser`
+      (removed). The emitter sits on the mouth tile, beam facing out (east), so the beam spans
+      the only entrance. `beamContact` covers the approach; the interior is clear.
+- [x] **Lane keeps clear (mapgen.js `patClearsNook`).** D's patrol patterns are filtered to
+      those that pass the nook box, so a guard never patrols through the nook walls (main +
+      fallback). The nook tiles are reserved from obstacles and random containers.
+- [x] **Solvability holds.** The laser is non-solid, so the BFS treats the mouth as passable;
+      the bowl's interior floor tile is reachable, so the gold key stays in the key chain.
+- [x] **Tests (tools/test-nook.js, 13 checks).** Walls carved + mouth open; the gold key is the
+      bowl; the emitter is on the mouth facing out; the interior is reachable; the live beam
+      covers the approach (and the interior is clear); all three keys + file + exit stay in the
+      chain. `test-gen` cap for D raised by the nook's 9 wall tiles.
+
+Full suite green: 24 headless, nook + beam render verified (live + dormant).
+
 ---
 
 ## Carryovers (open from before)
@@ -1808,6 +1842,7 @@ node tools/test-doors.js        # 0.17.3: opened keyed doors get the same lintel
 node tools/test-sleep.js        # 0.18.0: the sleeping guard (duty cycle) - schedule, blind, KO target, toggle
 node tools/test-switch.js       # 0.22.0: the floor-plate switch - occupancy + grace window (crate on plate, re-arm, cancel)
 node tools/test-crate.js        # 0.22.0: the pushable crate - solid, push, wall-stop, LOS block, guard stall, toggle
+node tools/test-nook.js         # 0.23.0: the laser nook - box geometry, gold key in bowl, beam gate, solvability
 node tools/sim-play.js          # headless winnability (stale bot; not a tuning signal)
 NODE_PATH=<your-playwright-install> node tools/check-touch.js  # 13 touch checks (4-way pad + Enter restart)
 NODE_PATH=<your-playwright-install> node tools/check-mobile.js # 14 mobile layout checks

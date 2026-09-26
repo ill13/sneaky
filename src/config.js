@@ -3,7 +3,7 @@
 //  Every knob in one place. Pure constants, no logic.
 //  Classic script: loads first, all names shared globally.
 // ============================================================
-const VERSION = '0.22.0';   // increment on any shipped change; shown next to the title
+const VERSION = '0.23.0';   // increment on any shipped change; shown next to the title
 
 const TILE = 32;
 // 3 x 3 grid of rooms: 3*16 + 2 inner walls + 2 outer = 52 cols,

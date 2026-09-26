@@ -223,6 +223,8 @@ function reservedObjectTiles(rc, rr) {
   if (is(ROLE.exit[0], ROLE.exit[1])) for (const t of EXIT_POOL) res.push(absT(t, rc, rr));
   for (const t of HIDE_POOL) res.push(absT(t, rc, rr));   // bin/closet corners (F23): always clear floor
   for (const k of KEYS) for (const t of doorSecApproach(k.doorSec)) res.push(t);   // every door's approach tiles (absolute)
+  // F44: the laser nook (walls + interior + approach) is reserved in D
+  if (rc === NOOK.room[0] && rr === NOOK.room[1]) for (const t of nookTiles()) res.push(t);
   return res;
 }
 // Drop 3-5 obstacles into one room: random shape, random floor anchor (1-tile
@@ -310,9 +312,17 @@ function assignContainerContents(rng, containers) {
     return ct;
   };
   for (const k of KEYS) {
-    const ct = take(k.room[0], k.room[1]);
+    let ct;
+    if (k.id === 'gold' && NOOK) {
+      // F44: the gold key lives in the laser nook's bowl (forced, not random)
+      const [nox, noy] = roomOrigin(NOOK.room[0], NOOK.room[1]);
+      ct = containers.find((x) => x.c === nox + NOOK.bowl[0] && x.r === noy + NOOK.bowl[1]);
+      if (ct) used.add(ct.id);
+    } else {
+      ct = take(k.room[0], k.room[1]);
+    }
     if (!ct) return null;
-    ct.arc = rng() < 0.5 ? 'fast' : 'mid';
+    ct.arc = k.id === 'gold' ? 'mid' : (rng() < 0.5 ? 'fast' : 'mid');
     ct.contents = [{ role: 'key', id: k.id }];
     for_[k.id] = ct;
   }
@@ -374,20 +384,6 @@ function placeCameraSwitch(m, room) {
   return (cam && sw) ? { cam, sw } : null;
 }
 
-// F40: pick a free floor tile in the laser room for the emitter (left half,
-// near mid-height) - the beam points east from there. Deterministic per seed.
-function placeLaser(m, room) {
-  const [ox, oy] = roomOrigin(room[0], room[1]);
-  const mid = oy + 4;
-  let best = null, bd = Infinity;
-  for (let r = oy + 1; r <= oy + 8; r++) for (let c = ox + 1; c <= ox + 7; c++) {
-    if (m[r][c] !== 0) continue;
-    const d = Math.abs(r - mid) * 10 + (c - ox);
-    if (d < bd) { bd = d; best = [c, r]; }
-  }
-  return best;
-}
-
 // F42: the robot's patrol lane (a fixed PATTERNS sweep in the room) + a free floor
 // tile for its switch (right edge, near mid-height, off the lane). Deterministic.
 function placeRobot(m, room) {
@@ -438,10 +434,49 @@ function crateRow(m, camSw, robotPos, containers) {
   return out;
 }
 
+// F44: carve the laser nook in room D - a box missing its right side (the mouth).
+// Only the top, bottom, and left walls are laid; the right side stays open, so the
+// mouth (right-middle) is the single entrance. Deterministic.
+function carveNook(m) {
+  const [ox, oy] = roomOrigin(NOOK.room[0], NOOK.room[1]);
+  const { c0, c1, r0, r1 } = NOOK;
+  for (let c = c0; c <= c1; c++) { m[oy + r0][ox + c] = 1; m[oy + r1][ox + c] = 1; }   // top + bottom
+  for (let r = r0; r <= r1; r++) m[oy + r][ox + c0] = 1;                              // left
+  m[oy + NOOK.mouth[1]][ox + NOOK.mouth[0]] = 0;   // the mouth stays open
+}
+// F44: every nook tile (the box - walls + interior - plus the approach tile), so
+// obstacles and random containers keep clear of it.
+function nookTiles() {
+  const [ox, oy] = roomOrigin(NOOK.room[0], NOOK.room[1]);
+  const { c0, c1, r0, r1, approach } = NOOK;
+  const t = [];
+  for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) t.push([ox + c, oy + r]);
+  t.push([ox + approach[0], oy + approach[1]]);
+  return t;
+}
+// F44: the laser emitter's absolute tile - it sits on the nook's mouth, so the
+// beam (facing out) spans the only entrance. The laser always lives in D (the
+// nook's room), so this replaces the old free-tile laser placement.
+function nookEmitter() {
+  const [ox, oy] = roomOrigin(NOOK.room[0], NOOK.room[1]);
+  return [ox + NOOK.emitter[0], oy + NOOK.emitter[1]];
+}
+// F44: does a patrol pattern stay clear of the nook box? D's lane is restricted to
+// patterns that pass, so a guard never patrols through the nook walls.
+function patClearsNook(pat) {
+  const [ox, oy] = roomOrigin(NOOK.room[0], NOOK.room[1]);
+  const { c0, c1, r0, r1 } = NOOK;
+  const box = new Set();
+  for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) box.add(c + ',' + r);
+  for (const k of patternLanes(pat.pts)) if (box.has(k)) return false;
+  return true;
+}
+
 function generateLayout(seed) {
   for (let attempt = 0; attempt < 96; attempt++) {
     const rng = mulberry32(seed + attempt);
     const m = buildMap();   // walls + locked doors only; obstacles are procedural
+    carveNook(m);           // F44: the laser nook in D (the gold key's vault)
 
     // one distinct pattern per guard slot, then furniture off the lanes.
     const paths = [];
@@ -449,7 +484,9 @@ function generateLayout(seed) {
     for (const [rc, rr] of ALL_ROOMS) {
       const role = roleOf(rc, rr);
       const laneSet = new Set();
-      for (const pat of pickN(rng, PATTERNS, GUARDS_PER_ROLE[role])) {
+      // F44: D's lane is restricted to patterns that clear the nook box
+      const pool = (rc === NOOK.room[0] && rr === NOOK.room[1]) ? PATTERNS.filter(patClearsNook) : PATTERNS;
+      for (const pat of pickN(rng, pool, GUARDS_PER_ROLE[role])) {
         for (const k of patternLanes(pat.pts)) laneSet.add(k);
         paths.push(pat.pts.map((t) => absT(t, rc, rr)));
       }
@@ -464,6 +501,15 @@ function generateLayout(seed) {
       minCont = Math.min(minCont, placed);
     }
     if (minCont < containersPerRoom(0, 0)) continue;   // every room must hit its minimum
+
+    // F44: the gold key's container is the nook's bowl (forced, deterministic).
+    // The bowl is reserved from the random placement above, so this always adds it.
+    const [nox, noy] = roomOrigin(NOOK.room[0], NOOK.room[1]);
+    const nb = [nox + NOOK.bowl[0], noy + NOOK.bowl[1]];
+    if (!containers.some((ct) => ct.c === nb[0] && ct.r === nb[1])) {
+      m[nb[1]][nb[0]] = 1;
+      containers.push({ c: nb[0], r: nb[1], rc: NOOK.room[0], rr: NOOK.room[1], id: 'ct' + containers.length, arc: null, contents: [], opened: false });
+    }
 
     const assigned = assignContainerContents(rng, containers);
     if (!assigned) continue;   // a required room ran out of free containers
@@ -500,7 +546,7 @@ function generateLayout(seed) {
       kc.allKeys && kc.fileOk && kc.exitOk
     ) {
       const camSw = placeCameraSwitch(m, CAM_ROOM);   // F39: the camera + its switch
-      const laserPos = placeLaser(m, LASER_ROOM);     // F40: the laser emitter
+      const laserPos = nookEmitter();                 // F44: the laser on the nook's mouth
       const robotPos = placeRobot(m, ROBOT_ROOM);     // F42: the robot lane + its switch
       const cratePos = crateRow(m, camSw, robotPos, assigned.containers);   // F43: one crate per switch room
       return {
@@ -527,7 +573,8 @@ function generateFallback(seed) {
   for (const [rc, rr] of ALL_ROOMS) {
     const role = roleOf(rc, rr);
     const laneSet = new Set();
-    for (const pat of pickN(rng, PATTERNS, GUARDS_PER_ROLE[role])) {
+    const pool = (rc === NOOK.room[0] && rr === NOOK.room[1]) ? PATTERNS.filter(patClearsNook) : PATTERNS;
+    for (const pat of pickN(rng, pool, GUARDS_PER_ROLE[role])) {
       for (const k of patternLanes(pat.pts)) laneSet.add(k);
       paths.push(pat.pts.map((t) => absT(t, rc, rr)));
     }
@@ -536,13 +583,20 @@ function generateFallback(seed) {
   const containers = [];
   for (const [rc, rr] of ALL_ROOMS)
     placeRoomContainers(rng, m, rc, rr, containersPerRoom(rc, rr), laneSets[rc + ',' + rr], reservedObjectTiles(rc, rr), containers);
+  // F44: the nook's bowl (the gold key's container) - same as the main loop
+  const [fnx, fny] = roomOrigin(NOOK.room[0], NOOK.room[1]);
+  const fb = [fnx + NOOK.bowl[0], fny + NOOK.bowl[1]];
+  if (!containers.some((ct) => ct.c === fb[0] && ct.r === fb[1])) {
+    m[fb[1]][fb[0]] = 1;
+    containers.push({ c: fb[0], r: fb[1], rc: NOOK.room[0], rr: NOOK.room[1], id: 'ct' + containers.length, arc: null, contents: [], opened: false });
+  }
   const assigned = assignContainerContents(rng, containers) || { containers, for_: {} };
   const spawn = absT(SPAWN_T, ROLE.spawn[0], ROLE.spawn[1]);
   const exit = absT(EXIT_POOL[0], ROLE.exit[0], ROLE.exit[1]);
   const hideSpots = ALL_ROOMS.map(([rc, rr]) => absT(HIDE_POOL[0], rc, rr));
   const camSw = placeCameraSwitch(m, CAM_ROOM);
   const robotPos = placeRobot(m, ROBOT_ROOM);
-  return { map: m, paths, spawn, exit, hideSpots, seed, usedSeed: -1, containers: assigned.containers, questContainer: assigned.for_, camSw, laserPos: placeLaser(m, LASER_ROOM), robotPos, cratePos: crateRow(m, camSw, robotPos, assigned.containers) };
+  return { map: m, paths, spawn, exit, hideSpots, seed, usedSeed: -1, containers: assigned.containers, questContainer: assigned.for_, camSw, laserPos: nookEmitter(), robotPos, cratePos: crateRow(m, camSw, robotPos, assigned.containers) };
 }
 
 // ---------------- Wall edge table (for exact cone clipping) ----------------
