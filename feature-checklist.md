@@ -1835,6 +1835,21 @@ Full suite green: 28 headless.
 
 ---
 
+### 0.25.1 - The beam gates the entrance, not the nook's length (F44)
+
+The 0.25.0 setpiece had a 1-tile mouth in the middle of the open side and the beam
+running down the nook's long axis (mouth -> bowl). That read as a laser shooting *down*
+the room. Now the **mouth is the full open side** and the **beam runs across it** -
+perpendicular to the approach, with the emitter at a corner of that side and the beam
+spanning the whole side. The gate is at the entrance; the bowl (inside, on the far side)
+is clear of it. `carveNook` opens the whole mouth side; `nookBeamLen` spans that side
+(vertically for left/right mouths, horizontally for top/bottom). All four directions
+verified: the beam always crosses its open side, the bowl always stays in the box.
+
+Full suite green: 28 headless.
+
+---
+
 ### 0.24.0 - Alarm converge + reinforcements (F45), the hit pool (F46), the pull (F47)
 
 Three systems that make the alarm and the player's body feel real.

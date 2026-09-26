@@ -452,20 +452,27 @@ function crateRow(m, camSw, robotPos, containers) {
 }
 
 // F44: carve the laser nook in room D - a box walled on all four sides, with the
-// derived mouth tile opened (the single entrance on the mouth side). Directional:
-// the box size and mouth side come from NOOK. Deterministic.
+// MOUTH SIDE fully opened (the whole side is the entrance). Directional: the box
+// size and mouth side come from NOOK. Deterministic.
 function carveNook(m) {
   const [ox, oy] = roomOrigin(NOOK.room[0], NOOK.room[1]);
-  const { c0, c1, r0, r1 } = NOOK;
+  const { c0, c1, r0, r1, mouthSide } = NOOK;
   for (let c = c0; c <= c1; c++) { m[oy + r0][ox + c] = 1; m[oy + r1][ox + c] = 1; }   // top + bottom
   for (let r = r0; r <= r1; r++) { m[oy + r][ox + c0] = 1; m[oy + r][ox + c1] = 1; }   // left + right
-  m[oy + NOOK.mouth[1]][ox + NOOK.mouth[0]] = 0;   // open the mouth (the derived tile)
+  // open the whole mouth side (the entrance)
+  switch (mouthSide) {
+    case 'right':  for (let r = r0; r <= r1; r++) m[oy + r][ox + c1] = 0; break;
+    case 'left':   for (let r = r0; r <= r1; r++) m[oy + r][ox + c0] = 0; break;
+    case 'top':    for (let c = c0; c <= c1; c++) m[oy + r0][ox + c] = 0; break;
+    case 'bottom': for (let c = c0; c <= c1; c++) m[oy + r1][ox + c] = 0; break;
+  }
 }
-// F44: the beam length - just long enough to span the nook box (mouth -> far
-// wall), so the hit-test matches the visible beam for any size/orientation.
+// F44: the beam length - just long enough to span the open side (the entrance),
+// so the hit-test matches the visible beam for any size/orientation. Left/right
+// mouths have a vertical open side (span h); top/bottom have a horizontal one (span w).
 function nookBeamLen() {
-  const horiz = NOOK.mouthSide === 'left' || NOOK.mouthSide === 'right';
-  return (horiz ? (NOOK.w - 1) : (NOOK.h - 1)) * TILE;
+  const vert = NOOK.mouthSide === 'left' || NOOK.mouthSide === 'right';
+  return (vert ? (NOOK.h - 1) : (NOOK.w - 1)) * TILE;
 }
 // F44: every nook tile (the box - walls + interior - plus the approach tile), so
 // obstacles and random containers keep clear of it.
