@@ -54,6 +54,7 @@ function dispRight(frames) {
   }
   ok(spot !== null, 'T2: found a clear run in room E to measure on');
   state.player.x = spot[0]; state.player.y = spot[1];
+  state.player.invuln = 999;   // F46: i-frames so a reinforcement can't stagger the speed measurement
   g.update(1 / 60);
   const free = dispRight(12);
   // now carry a room-E body and repeat the same move

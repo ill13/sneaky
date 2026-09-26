@@ -63,7 +63,8 @@ function tryMove(u, dx, dy) {
 // Returns the pushed crate (so the caller can fire the guard reaction) or null.
 function tryPushCrate(p, mx, my) {
   const pc = Math.floor(p.x / TILE), pr = Math.floor(p.y / TILE);
-  const EPS = 1.5;   // px - how close your edge must be to the crate's face to push
+  const EPS = 3;   // px - how close your edge must be to the crate's face to push (the
+                   // collision stops you ~2.5px short of the face, so 3px covers it)
   let dir = null, crate = null, fc = 0, fr = 0;
   if (mx > 0 && my === 0) { dir = [1, 0]; crate = crateAt(pc + 1, pr); fc = pc + 2; fr = pr; }
   else if (mx < 0 && my === 0) { dir = [-1, 0]; crate = crateAt(pc - 1, pr); fc = pc - 2; fr = pr; }
@@ -81,6 +82,28 @@ function tryPushCrate(p, mx, my) {
   if (tileBlocked(fc, fr)) return null;   // the far tile is open (map + no other crate)
   crate.c = fc; crate.r = fr;
   crate.x = (fc + 0.5) * TILE; crate.y = (fr + 0.5) * TILE;
+  return crate;
+}
+// F47: the pull - a deliberate one-tile SWAP, the counterpart to the automatic
+// push. Face a crate (held direction) and the crate comes to your tile while you
+// take its old one. Your tile is always the clear destination (you're leaving it),
+// so a pull never soft-locks. This is what lets you drag a crate ONTO a switch
+// plate (you stand on the plate, the crate takes it) or OFF one (the crate's on
+// the plate, you take it).
+function tryPullCrate(p, mx, my) {
+  const pc = Math.floor(p.x / TILE), pr = Math.floor(p.y / TILE);
+  let cc = pc, cr = pr;
+  if (mx > 0 && my === 0) cc = pc + 1;
+  else if (mx < 0 && my === 0) cc = pc - 1;
+  else if (my > 0 && mx === 0) cr = pr + 1;
+  else if (my < 0 && mx === 0) cr = pr - 1;
+  else return null;   // no clear cardinal facing
+  const crate = crateAt(cc, cr);
+  if (!crate) return null;
+  // the swap: crate -> your tile (pc, pr); you -> the crate's tile (cc, cr)
+  crate.c = pc; crate.r = pr;
+  crate.x = (pc + 0.5) * TILE; crate.y = (pr + 0.5) * TILE;
+  p.x = (cc + 0.5) * TILE; p.y = (cr + 0.5) * TILE;
   return crate;
 }
 

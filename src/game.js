@@ -55,6 +55,8 @@ function reset(seed) {
   state.player = makeUnit('player', 0, {
     x: (layout.spawn[0] + 0.5) * TILE, y: (layout.spawn[1] + 0.5) * TILE,
     invuln: 0, hits: 0,
+    hp: PLAYER_HP_START,   // F46: the hit pool - a hit costs 1; at 0 you're caught
+    stagger: 0,            // F46: sec you're flinched (can't move) after a non-lethal hit
   });
 
   state.guards = layout.paths.map((p, i) => makeUnit('guard', i + 1, makeGuard(p)));

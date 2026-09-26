@@ -17,12 +17,14 @@ function hitPlayer() {
   state.player.hits++;
   state.player.invuln = PLAYER_INVULN;
   state.flash = 0.4;
-  if (state.player.hits >= 2) {
+  state.player.hp -= 1;
+  if (state.player.hp <= 0) {
     state.won = false;
     state.gameOver = true;
     showOverlay('CAUGHT', false);
   } else {
-    state.alarmTime = alarmDuration(); // global escalation: the compound goes hot
+    state.player.stagger = HIT_STAGGER;   // F46: flinch - can't move for a beat
+    tripAlarm();                          // global escalation: the compound goes hot
   }
   updateHUD();
 }
@@ -31,10 +33,85 @@ function hitPlayer() {
 // guards. The forgiving grace model: an escalation, not a CAUGHT, and it never
 // increments your hit count.
 function machineAlarm() {
-  state.alarmTime = alarmDuration();
+  tripAlarm();
   state.spotFlash = 1;
   state.flash = Math.max(state.flash, 0.2);
   updateHUD();
+}
+// F45: the alarm has a location - the tile it was triggered from (where you are).
+// Tripping it goes hot AND sends every awake mobile guard in that room converging
+// on the trigger tile, then sweeping it. This is the "the room locks down" beat.
+function tripAlarm() {
+  state.alarmTime = alarmDuration();
+  state.alarmPos = [Math.floor(state.player.x / TILE), Math.floor(state.player.y / TILE)];
+  convergeGuards();
+  state.pendingReinforce = true;   // F45: the room pulls in extra guards (spawned at the top of update)
+}
+// F45: the room pulls in extra (temporary) guards on an alarm - the reinforcement
+// spike. They enter from the far side of the room and converge on the trigger tile.
+// Temporary: they peel off when the alarm clears or their timer runs out. Capped by
+// REINFORCE_MAX so it's a spike, not a swarm. Spawned outside the guard loop (the
+// pendingReinforce flag) so we never mutate state.guards mid-iteration.
+function spawnReinforcements() {
+  const room = state.alarmPos ? roomAt(state.alarmPos[0], state.alarmPos[1]) : null;
+  if (!room || !state.alarmPos) return;
+  const existing = state.guards.filter((x) => x.reinforcement).length;
+  const toSpawn = Math.max(0, REINFORCE_MAX - existing);
+  for (let i = 0; i < toSpawn; i++) {
+    const tile = reinforceEntryTile(room, state.alarmPos);
+    if (!tile) return;
+    const g = makeUnit('guard', 1000 + state.guards.length, makeGuard([[tile[0], tile[1]]]));
+    g.x = (tile[0] + 0.5) * TILE; g.y = (tile[1] + 0.5) * TILE;
+    g.reinforcement = true;
+    g.reinforceT = REINFORCE_TIME;
+    g.state = 'investigate';
+    g.targetTile = [state.alarmPos[0], state.alarmPos[1]];
+    g.searchT = CONVERGE_TIME;
+    g.pathTiles = [];
+    state.guards.push(g);
+  }
+}
+// the entry tile: a floor tile in the room as FAR from the trigger as possible, so
+// the reinforcement walks in from the far side (a real "arriving" beat).
+function reinforceEntryTile(room, alarmTile) {
+  let best = null, bd = -1;
+  const ox = 1 + room[0] * 17, oy = 1 + room[1] * 11;
+  for (let r = oy + 1; r < oy + 10; r++) for (let c = ox + 1; c < ox + 16; c++) {
+    if (state.map[r][c] !== 0) continue;
+    const d = Math.hypot(c - alarmTile[0], r - alarmTile[1]);
+    if (d > bd) { bd = d; best = [c, r]; }
+  }
+  return best;
+}
+// F45: despawn the temporary guards. The alarm clearing peels them all off at once
+// (the coast is clear); otherwise each peels off on its own timer.
+function stepReinforcements(dt) {
+  const alarmClear = state.alarmTime <= 0;
+  for (let i = state.guards.length - 1; i >= 0; i--) {
+    const g = state.guards[i];
+    if (!g.reinforcement) continue;
+    g.reinforceT -= dt;
+    if (alarmClear || g.reinforceT <= 0) state.guards.splice(i, 1);
+  }
+}
+// F45: every awake mobile guard in the alarm's room heads to the trigger tile and
+// sweeps it. Reuses the 'investigate' state (move to target + sweep + resume).
+// Machines don't converge (they're fixed), and a guard already chasing is already
+// on you, so it's left alone.
+function convergeGuards() {
+  const room = state.alarmPos ? roomAt(state.alarmPos[0], state.alarmPos[1]) : null;
+  if (!room) return;
+  for (const g of state.guards) {
+    if (g.machine) continue;
+    if (g.state === 'down' || g.state === 'hidden' || g.state === 'dazed') continue;
+    if (g.asleep) continue;   // a dozing guard is asleep - the alarm doesn't rouse it (only the duty cycle does)
+    if (g.state === 'chase') continue;   // already on you
+    if (g.room[0] !== room[0] || g.room[1] !== room[1]) continue;   // not in the alarm room
+    g.state = 'investigate';
+    g.targetTile = [state.alarmPos[0], state.alarmPos[1]];
+    g.searchT = CONVERGE_TIME;
+    g.pathTiles = [];
+  }
 }
 
 // ---- The single contextual action (F27) ----
@@ -119,6 +196,19 @@ function heldMoveDir() {
 // mutation - so the HUD can light the button from it every frame. The button
 // only lights for a distract while you're pressing TOWARD the wall, so the lit
 // state is the full trigger: no dead presses.
+// F47: is there a crate directly in front of you (the held cardinal direction)?
+// Pure - shared by the button light and the pull so they can't drift.
+function pullReady(px, py, mdx, mdy) {
+  const pc = Math.floor(px / TILE), pr = Math.floor(py / TILE);
+  let cc = pc, cr = pr;
+  if (mdx > 0 && mdy === 0) cc = pc + 1;
+  else if (mdx < 0 && mdy === 0) cc = pc - 1;
+  else if (mdy > 0 && mdx === 0) cr = pr + 1;
+  else if (mdy < 0 && mdx === 0) cr = pr - 1;
+  else return false;
+  return !!crateAt(cc, cr);
+}
+
 function actionContext() {
   const p = state.player;
   const [mdx, mdy] = heldMoveDir();
@@ -130,6 +220,7 @@ function actionContext() {
   if (knockoutReady()) return 'knockout';       // guard actions beat the wall-distract
   if (downGuardNear(p.x, p.y)) return 'grab';
   if (searchTarget()) return 'search';          // F33: facing an unsearched container
+  if (pullReady(p.x, p.y, mdx, mdy)) return 'pull';   // F47: a crate in front - pull it
   if (canDistract(p.x, p.y, mdx, mdy) && state.distractCd <= 0) return 'distract';
   return null;
 }
@@ -137,6 +228,7 @@ function tryAction() {
   const v = actionContext();
   if (!v) return;
   if (v === 'search') return;   // F33: search is a HOLD (stepSearch), not an edge verb
+  if (v === 'pull') return;     // F47: the pull is handled in the movement block (it needs the facing)
   const p = state.player;
   if (v === 'knockout') { tryKnockout(); return; }
   if (v === 'grab') {
@@ -286,6 +378,11 @@ function grantItem(item) {
     state.foundNotes.push(text);
     state.noteToast = { text, t: 3, clue: false };
   }
+  else if (item.role === 'health') {   // F46: top the hit pool back up 1 (capped)
+    state.player.hp = Math.min(PLAYER_HP_MAX, state.player.hp + 1);
+    state.flash = Math.max(state.flash, 0.2);
+    updateHUD();
+  }
 }
 // Debug (G): bank every item at once - all three keys, the file, all three mods,
 // and the knowledge of all clue rooms (so the minimap lights up). It skips the
@@ -296,6 +393,7 @@ function grantAllItems() {
   state.hasFile = true;
   for (const t of UPG_TYPES) state.upgrades[t] = true;
   for (const k of KEYS) state.clues[k.id] = true;
+  state.player.hp = PLAYER_HP_MAX;   // F46: the debug grant also tops the hit pool
   state.flash = Math.max(state.flash, 0.2);
   updateHUD();
 }
@@ -325,6 +423,10 @@ function update(dt) {
     return;
   }
   state.elapsed += dt;
+  // F45: spawn any queued reinforcements BEFORE the guard loop (never mutate
+  // state.guards mid-iteration), then let the temp guards age out.
+  if (state.pendingReinforce) { spawnReinforcements(); state.pendingReinforce = false; }
+  stepReinforcements(dt);
   if (state.flash > 0) state.flash -= dt;
   if (state.spotFlash > 0) state.spotFlash = Math.max(0, state.spotFlash - dt * 2.5);
   if (state.player.invuln > 0) state.player.invuln -= dt;

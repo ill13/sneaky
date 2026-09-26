@@ -1807,6 +1807,70 @@ Full suite green: 24 headless, nook + beam render verified (live + dormant).
 
 ---
 
+### 0.24.0 - Alarm converge + reinforcements (F45), the hit pool (F46), the pull (F47)
+
+Three systems that make the alarm and the player's body feel real.
+
+**F45 - the alarm now means something.** An alarm is no longer just a global speed bump; it
+is a location. `tripAlarm` records the trigger tile (`state.alarmPos`) and **converges**
+every awake, in-room guard onto that tile (they investigate the source), then a **reinforcement**
+queues: one temporary guard spawns at the far side of the room, path-finds in, and joins the
+search. It despawns when the alarm clears or its timer runs out. The converge skips machines
+(you can't rouse a robot), down/dazed/hidden guards, chasing guards (already on you), and
+asleep guards (only the duty cycle wakes those). The reinforcement spawns at the top of
+`update()` (never mid-guard-loop) so the `state.guards` array is never mutated while it's
+being iterated.
+
+- [x] **`tripAlarm(x, y, by)`** - sets the alarm timer, records `state.alarmPos` (the trigger
+      tile), converges the room's awake guards, and queues one reinforcement.
+- [x] **`convergeGuards()`** - room-confined; each eligible guard gets the trigger tile as its
+      investigate target (A* path). Machines, down/hidden/dazed, asleep, chasing, and out-of-room
+      guards are skipped.
+- [x] **`spawnReinforcements()` / `stepReinforcements()` / `reinforceEntryTile()`** - the temp
+      guard spawns on a far floor tile in the alarm room, converges on the alarm tile, and
+      despawns on alarm-clear or timeout. `REINFORCE_MAX = 1`, `REINFORCE_TIME = 16s`.
+- [x] **Tests (tools/test-converge.js, 6; tools/test-reinforce.js, 7).** Converge targets the
+      trigger tile, skips machines/asleep/chasing, is room-confined; the reinforcement spawns in
+      the alarm room, is temporary, and despawns on alarm-clear.
+
+**F46 - the hit pool (health).** A hit is no longer instant death. You start at **2 hp**
+(max 3); a hit costs 1, trips the alarm, and **staggers** you (no movement for 0.6s, hands
+still work). At 0 you're caught. **Health items** (1-2 per run, in the usual containers) restore
+1 (capped at 3). The HUD shows your hp as hearts next to the inventory. Two hits is the new
+permadeath - a health item is the reason a second run isn't a coin flip.
+
+- [x] **`PLAYER_HP_START = 2`, `PLAYER_HP_MAX = 3`, `HIT_STAGGER = 0.6`.** The player gains
+      `hp` and `stagger`.
+- [x] **`hitPlayer(g)`** - `-1 hp`; at 0 you're caught, otherwise you stagger (and the alarm
+      trips, via `tripAlarm`).
+- [x] **`stepPlayer` stagger gate** - no movement while staggered, but actions/search still work.
+- [x] **The `health` item role** - 1-2 per run, placed after the quest/clue items; `grantItem`
+      and `grantAllItems` top up `hp` (capped).
+- [x] **HUD hearts** (`renderInventoryRow`) - one heart per max-hp slot, filled for current hp.
+- [x] **Tests (tools/test-health.js, 7).** Start at 2, a hit drops to 1 + staggers, a second
+      hit catches you, a health item restores (capped at 3), the alarm trips on a non-lethal hit.
+
+**F47 - the pull.** The push was automatic (walk into a crate); the pull is the deliberate
+**swap**: face a crate and press ACT, and the crate comes to your tile while you take its old
+one. It's a discrete action (no free-move), makes a quiet room-confined noise (quieter than a
+shove), and is what lets you drag a crate **onto** a switch plate (stand on it, pull the crate
+in) or **off** one (the crate's on it, you take it). The ACT context is mutually exclusive with
+the others (a crate in front = pull; a bin in front = search). The push's head-on EPS widened to
+3px so it triggers at the collision stop (the player stops ~2.5px short of a crate's face).
+
+- [x] **`tryPullCrate` (movement.js)** - the one-tile swap (crate -> your tile, you -> crate's
+      tile). Your tile is always the clear destination, so a pull never soft-locks.
+- [x] **`pullReady` (update.js)** - a crate in the held cardinal direction lights the ACT as
+      `pull` (shared by the button and the action so they can't drift).
+- [x] **`stepPlayer` pull branch** - the pull beats the automatic push and does not free-move
+      (the swap is the move); `doSearchNoise` at `PULL_NOISE` (48px, room-confined).
+- [x] **Tests (tools/test-pull.js, 6).** The ACT lights as pull; the swap moves both; a nearby
+      guard hears it; it drags a crate onto a plate; without ACT the crate is pushed (not pulled).
+
+Full suite green: 28 headless, 13 touch, 14 mobile.
+
+---
+
 ## Carryovers (open from before)
 
 - [x] **C1. Dead root `game.js`** (25KB monolith, unused since the refactor): archived to `.ill13/game.js` in the F7 pass. Root is clean.
@@ -1843,6 +1907,10 @@ node tools/test-sleep.js        # 0.18.0: the sleeping guard (duty cycle) - sche
 node tools/test-switch.js       # 0.22.0: the floor-plate switch - occupancy + grace window (crate on plate, re-arm, cancel)
 node tools/test-crate.js        # 0.22.0: the pushable crate - solid, push, wall-stop, LOS block, guard stall, toggle
 node tools/test-nook.js         # 0.23.0: the laser nook - box geometry, gold key in bowl, beam gate, solvability
+node tools/test-converge.js     # 0.24.0: F45 alarm converge - targets the trigger tile, skips machines/asleep/chasing, room-confined
+node tools/test-reinforce.js    # 0.24.0: F45 MGS reinforcements - temp guard spawns in the alarm room, despawns on alarm-clear
+node tools/test-health.js       # 0.24.0: F46 the hit pool - 2hp start, stagger, health items (capped), alarm on a hit
+node tools/test-pull.js         # 0.24.0: F47 the pull - ACT swap, quiet noise, crate onto a plate, push-vs-pull
 node tools/sim-play.js          # headless winnability (stale bot; not a tuning signal)
 NODE_PATH=<your-playwright-install> node tools/check-touch.js  # 13 touch checks (4-way pad + Enter restart)
 NODE_PATH=<your-playwright-install> node tools/check-mobile.js # 14 mobile layout checks

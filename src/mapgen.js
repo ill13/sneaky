@@ -311,6 +311,13 @@ function assignContainerContents(rng, containers) {
     used.add(ct.id);
     return ct;
   };
+  const takeAny = () => {   // F46: a free container in any room (for the health items)
+    const avail = containers.filter((ct) => !used.has(ct.id));
+    if (!avail.length) return null;
+    const ct = avail[Math.floor(rng() * avail.length)];
+    used.add(ct.id);
+    return ct;
+  };
   for (const k of KEYS) {
     let ct;
     if (k.id === 'gold' && NOOK) {
@@ -354,6 +361,16 @@ function assignContainerContents(rng, containers) {
     ct.arc = 'fast';
     ct.contents = [{ role: 'clue', id: clueKeys[i] + 'Clue', keyId: clueKeys[i] }];
     for_['clue_' + clueKeys[i]] = ct;
+  }
+  // F46: the health items - 1 or 2 per run, in a fast/mid container (never a quest
+  // item's). Topping up the hit pool is a "one more chance," a risk/reward find.
+  const healthCount = 1 + (rng() < 0.5 ? 1 : 0);
+  for (let i = 0; i < healthCount; i++) {
+    const ct = takeAny();
+    if (!ct) break;
+    ct.arc = rng() < 0.5 ? 'fast' : 'mid';
+    ct.contents = [{ role: 'health', id: 'health' + i }];
+    for_['health' + i] = ct;
   }
   for (const ct of containers) if (!used.has(ct.id)) {
     const r = rng();

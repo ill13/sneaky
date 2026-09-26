@@ -3,7 +3,8 @@
 //  Every knob in one place. Pure constants, no logic.
 //  Classic script: loads first, all names shared globally.
 // ============================================================
-const VERSION = '0.23.0';   // increment on any shipped change; shown next to the title
+const VERSION = '0.24.0';   // increment on any shipped change; shown next to the title
+// 0.24.0: F45 (alarm converge + MGS reinforcements), F46 (the hit pool / health), F47 (the pull)
 
 const TILE = 32;
 // 3 x 3 grid of rooms: 3*16 + 2 inner walls + 2 outer = 52 cols,
@@ -50,6 +51,9 @@ const ALARM_RANGE_MULT = 1.4;
 const ALARM_PATROL_SPEED_MULT = 1.15;   // while hot: patrol/investigate movement (chase is still faster)
 const ALARM_SEARCH_MULT = 1.75;         // while hot: search time ("they stop giving up")
 const ALARM_DURATION = 10;    // seconds of unbroken hiding to clear it
+const CONVERGE_TIME = 3.0;    // F45: sec a guard sweeps AT the alarm tile after converging on it
+const REINFORCE_MAX = 1;      // F45: extra (temporary) guards the room pulls in on an alarm
+const REINFORCE_TIME = 16;    // F45: sec a reinforcement stays before it peels off (or it leaves the moment the alarm clears)
 
 // guards shoot while chasing, close range, with line of sight
 const SHOOT_RANGE = 60;       // px - guards must be close, so a side-step breaks the shot
@@ -57,6 +61,11 @@ const SHOOT_CD = 0.9;         // sec between shots per guard
 const BULLET_SPEED = 320;     // px/sec
 const BULLET_LIFE = 1.4;      // sec
 const PLAYER_INVULN = 1.2;    // sec of i-frames after a hit
+// F46: the hit pool. A hit costs 1 + raises the alarm + staggers you; at 0 you're
+// caught. Health items (new container item) top you back up 1, capped at MAX.
+const PLAYER_HP_START = 2;
+const PLAYER_HP_MAX = 3;
+const HIT_STAGGER = 0.6;      // sec you're flinched (can't move) after a non-lethal hit
 
 // dead-end upgrades (one per dead-end room; seed shuffles type <-> room)
 const UPG_STIM_MULT = 1.15;   // STIM: player speed x1.15
@@ -124,6 +133,7 @@ const CAM_ROOM = [1, 1];     // the E hub - the environmental-control showcase r
 // parked on it is the persistent version of stepping on it (no timer while it's there).
 const SWITCH_GRACE = 6;      // sec - how long the machine stays down after the plate clears
 const CRATE_STALL = 0.9;     // sec - a patrolling guard's one-time stall when a crate moves into its lane
+const PULL_NOISE = 1.5 * TILE;   // F47: px radius (48px) a crate PULL carries - quieter than a shove, room-confined
 // F40: the laser (the industrial skin of the duty cycle). A fixed emitter projects a
 // beam (a line-segment) that blinks on/off (LASER_ON / LASER_OFF). Cross it while it's
 // dormant; touch it while it's live and it trips the ALARM (an escalation, not a hit).

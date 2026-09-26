@@ -43,14 +43,22 @@ switch. These are all gated by `TOOLS` (`sleep` / `camera` / `laser` / `robot`, 
   `hear` / `investigate` (the distraction lure), `dazed` (the wake wobble), `down`
   (knocked out), and `hidden` (in a bin - inert, forever).
 - **Two escalation paths (the forgiving grace model)**:
-  - **A hit** (`hitPlayer`, only from a *human* guard's touch): +1 hit, 1.2s of
-    i-frames. **Two hits = CAUGHT** (game over). The first hit sets the alarm.
+  - **A hit** (`hitPlayer`, only from a *human* guard's touch): `-1 hp` (you start at 2, max
+    3), 1.2s of i-frames, and a 0.6s **stagger** (no movement, hands still work). **0 hp =
+    CAUGHT** (game over). Every hit sets the alarm. **Health items** (1-2 per run) restore 1,
+    capped at 3 - so two hits is the floor, not a coin flip.
   - **A machine alarm** (`machineAlarm`, camera lock / laser contact): sets the alarm and
     a flash, but **never increments your hit count**. An escalation, not a death - now
     you deal with the hot guards.
 - **Alarm heat**: while `alarmTime > 0`, *every* patrol guard gets multipliers - range
   x1.4, chase speed x1.35, patrol speed x1.15, and search time x1.75 ("they stop giving
   up"). It decays after 10s of unbroken hiding (the HUSH upgrade adds +5s).
+- **The alarm has a location (F45)**: `tripAlarm` records the trigger tile and **converges**
+  every awake, in-room guard onto it (they investigate the source), then a temporary
+  **reinforcement** spawns at the far side of the room and joins the search - it despawns
+  when the alarm clears. The converge skips machines (you can't rouse a robot) and asleep
+  guards (only the duty cycle wakes those). An alarm is a place and a growing room, not just
+  a global speed bump.
 - **The duty cycle (`tickDuty`)**: one shared timing flag driving both the sleeper
   (corporate skin) and the laser (industrial skin). Ticked **only in patrol**, so a guard
   chasing you never dozes mid-pursuit.

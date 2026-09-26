@@ -122,8 +122,26 @@ function drawKeyIcon(x, y, color) {
   ctx.fillRect(x + 11.5, y + 1, 1.5, 3);
 }
 
+// F46: the hit pool - a heart per point of hp, dimmed when you've lost it.
+function drawHealthIcon(x, y, full) {
+  ctx.fillStyle = full ? '#ff5566' : '#3a2a2e';
+  ctx.beginPath();
+  ctx.arc(x + 2.6, y - 1, 2.3, 0, Math.PI * 2);
+  ctx.arc(x + 7.4, y - 1, 2.3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(x + 0.3, y + 0.6);
+  ctx.lineTo(x + 9.7, y + 0.6);
+  ctx.lineTo(x + 5, y + 5.5);
+  ctx.closePath();
+  ctx.fill();
+}
+
 function drawInventory(x, y) {
   let x2 = x;
+  // F46: the hit pool leads the row - it's the stat that ends the run
+  for (let i = 0; i < PLAYER_HP_MAX; i++) { drawHealthIcon(x2, y, i < state.player.hp); x2 += 12; }
+  x2 += 6;
   const hadKeys = KEYS.some((k) => state.keyBag[k.id]);
   for (const k of KEYS) if (state.keyBag[k.id]) {
     drawKeyIcon(x2, y, k.color);

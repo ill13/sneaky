@@ -27,29 +27,43 @@
 // The player's gameplay intents, one frame. Behavior is byte-identical to the
 // block it replaced in update.js - this is a move, not a change.
 function stepPlayer(dt) {
+  // F46: stagger - a non-lethal hit flinches you: no movement for a beat. Your
+  // hands still work, so you can still act/search while you're staggered.
+  const canMove = state.player.stagger <= 0;
+  if (state.player.stagger > 0) state.player.stagger = Math.max(0, state.player.stagger - dt);
   // player (keyboard keys OR'd with gamepad/touch directions - heldMoveDir in
   // update.js is the single source, also used by the direction-aware distract)
   const [mx, my] = heldMoveDir();
-  if (mx || my) {
-    // F43: the push runs BEFORE the free-move - shove a crate one tile out of the
-    // way, then the player's collision slides them into the vacated space. A crate
-    // you can't push (far tile blocked, or you're not head-on on it) is solid.
-    const pushed = tryPushCrate(state.player, mx, my);
-    if (pushed) onCrateMoved(pushed);
-    const len = Math.hypot(mx, my);
-    const speed = statsFor('player').moveSpeed * (state.upgrades.stim ? UPG_STIM_MULT : 1) * (state.carrying ? CARRY_SPEED_MULT : 1);
-    // Phase 1.3: the player free-moves through freeMove (movement.js), the shared
-    // movement path that also carries the corner-escape assist - so any future
-    // free-steering unit (VIP, a stronger roamer) inherits it for free.
-    freeMove(state.player, (mx / len) * speed * dt, (my / len) * speed * dt);
+  const act = !!(state.keys['e'] || state.keys[' '] || state.pad.x || state.pad.y);
+  const actEdge = act && !state.actionPrev;
+  const ctx = actionContext();   // the contextual verb (or null) - read once per frame
+  if (canMove && (mx || my)) {
+    if (actEdge && ctx === 'pull') {
+      // F47: the pull - a discrete one-tile SWAP (the crate comes to your tile, you
+      // take its old one). It beats the automatic push and does not free-move (the
+      // swap IS the move). A quiet noise, room-confined - quieter than a shove.
+      const pulled = tryPullCrate(state.player, mx, my);
+      if (pulled) { onCrateMoved(pulled); doSearchNoise(pulled.x, pulled.y, PULL_NOISE); }
+    } else {
+      // F43: the push runs BEFORE the free-move - shove a crate one tile out of the
+      // way, then the player's collision slides them into the vacated space. A crate
+      // you can't push (far tile blocked, or you're not head-on on it) is solid.
+      const pushed = tryPushCrate(state.player, mx, my);
+      if (pushed) onCrateMoved(pushed);
+      const len = Math.hypot(mx, my);
+      const speed = statsFor('player').moveSpeed * (state.upgrades.stim ? UPG_STIM_MULT : 1) * (state.carrying ? CARRY_SPEED_MULT : 1);
+      // Phase 1.3: the player free-moves through freeMove (movement.js), the shared
+      // movement path that also carries the corner-escape assist - so any future
+      // free-steering unit (VIP, a stronger roamer) inherits it for free.
+      freeMove(state.player, (mx / len) * speed * dt, (my / len) * speed * dt);
+    }
   }
   // action (F27): ONE contextual button - E / Space (key) or X / Y (pad) or the
   // touch ACT button. Edge-triggered (one verb per press); tryAction() picks the
-  // verb from context (knockout / grab / hide / distract / drop). The distract is
-  // no longer a separate input - it's the wall-branch of this one contextual action.
-  const act = !!(state.keys['e'] || state.keys[' '] || state.pad.x || state.pad.y);
-  if (act && !state.actionPrev) tryAction();
+  // verb from context (knockout / grab / hide / distract / drop / pull). The pull
+  // is handled in the movement block above (it needs the facing), so skip it here.
   state.actionPrev = act;
+  if (actEdge && ctx !== 'pull') tryAction();
   stepSearch(dt, act);   // F33: hold ACT on a container to search it (a hold, not an edge)
   // the carried body follows you, but is ROOM-BOUND: it can't go through a
   // doorway, so the moment you cross the threshold (roomAt -> null/other room)

@@ -79,9 +79,12 @@ function loadGame() {
       tryAction, hideSpotNear, downGuardNear, wakeGuard, tryKnockout, canDistract, doDistract,
       actionContext, isKnockoutTarget, knockoutReady,   // F27: the contextual action
       searchTarget, stepSearch, openContainer, grantItem, doSearchNoise, grantAllItems,   // F33: hold-to-search containers + debug grant-all
+      hitPlayer, PLAYER_HP_START, PLAYER_HP_MAX, HIT_STAGGER,   // F46: the hit pool + health items
       stepSwitches, onCrateMoved, machineAlarm,   // F43: the floor-plate switch (occupancy + grace) + crate reaction + machine alarm
+      tripAlarm, convergeGuards, CONVERGE_TIME,   // F45: the alarm lockdown (converge on the trigger tile)
+      spawnReinforcements, stepReinforcements, REINFORCE_MAX, REINFORCE_TIME,   // F45: the temporary reinforcement spike
       roomAt, reachable, solid, generateFallback, mulberry32, validateKeyChain,   // F29: the multi-key solvability proof
-      crateAt, tileBlocked, tryPushCrate,   // F43: the pushable crate (solid + shove)
+      crateAt, tileBlocked, tryPushCrate, tryPullCrate, pullReady, PULL_NOISE,   // F43: the pushable crate (solid + shove); F47: the pull (ACT swap)
       makeCamera, makeSwitch, makeLaser, makeRobot, makeCrate,   // F39: camera + switch; F40: laser; F42: robot; F43: crate
       KEYS, doorSecTiles, doorSecApproach,   // F29: the colored key/door table + helpers
       NOOK, nookEmitter, carveNook, patClearsNook,   // F44: the laser nook (geometry + carving + lane filter)
