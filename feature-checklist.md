@@ -2028,6 +2028,18 @@ wrap come from the source art instead of a formula. Vector fallback unchanged.
 
 Full suite green: 29 headless.
 
+**0.28.3 - uniform tiles, seamless corners.** The real tiles looked right in isolation but bled
+at the seams: the derelict walls are *heavily* decorated (unique panels, slots, hazard stripes,
+indicator lights per tile), and none of that detail lines up across a boundary, so every corner
+and every run showed a visible break. The fix is to keep the 3D *structure* and drop the unique
+decoration. The atlas is regenerated uniform: a cap strip on the wall-facing edges, and a face
+band on each floor-facing edge with a vertical gradient (dark where it meets the cap, a lit
+baseboard where it meets the floor). That gradient is what sells the depth - a flat band reads as
+a border, a shaded one reads as a wall. Because every tile is now the same, the corners and runs
+tile with no seams. Vector fallback unchanged.
+
+Full suite green: 29 headless.
+
 ---
 
 ## Carryovers (open from before)
