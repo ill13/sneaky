@@ -85,7 +85,7 @@ function reset(seed) {
   // pure timing). Gated by TOOLS.laser.
   if (TOOLS.laser && layout.laserPos) {
     const [lc, lr] = layout.laserPos;
-    state.guards.push(makeUnit('laser', 101, makeLaser(lc, lr, 0)));   // beam points east
+    state.guards.push(makeUnit('laser', 101, makeLaser(lc, lr, Math.PI)));   // beam points west, across the nook (mouth -> bowl)
   }
   // F42: the robot (the moving machine). A sentry that patrols the Vault lane with
   // a vision cone; a sustained look trips the alarm (not a hit). It never chases.

@@ -44,15 +44,16 @@ const KEYS = [
 ];
 // F44: the laser nook in room D - a box missing one side (the mouth), with the
 // gold key's container in the bowl and the laser emitter sitting on the mouth,
-// beam pointing out. You time the beam's off-window to slip in, grab the key,
-// and get out before it re-arms. Room-relative tiles in D (16 wide x 10 tall).
+// beam pointing IN (across the nook, mouth -> bowl). You time the beam's
+// off-window to slip in, grab the key, and get out before it re-arms.
+// Room-relative tiles in D (16 wide x 10 tall).
 const NOOK = {
   room: [0, 1],               // D - the gold key's room
   c0: 1, c1: 4, r0: 7, r1: 9, // the box (4 wide x 3 tall), missing its right side
   mouth: [4, 8],              // the open tile (right-middle) - the only entrance
   bowl: [2, 8],               // the container tile (the gold key)
-  emitter: [4, 8],            // the laser emitter, on the mouth, beam pointing out
-  facing: 0,                  // east - the beam reaches out through the mouth
+  emitter: [4, 8],            // the laser emitter, on the mouth, beam pointing in
+  facing: Math.PI,            // west - the beam spans the nook (mouth -> bowl), across the entrance
   approach: [5, 8],           // the floor tile outside the mouth (where you stand)
 };
 // Locked door tiles for bottom-row section cc on wall y=22 (a 2-tile block at

@@ -472,8 +472,9 @@ function nookTiles() {
   return t;
 }
 // F44: the laser emitter's absolute tile - it sits on the nook's mouth, so the
-// beam (facing out) spans the only entrance. The laser always lives in D (the
-// nook's room), so this replaces the old free-tile laser placement.
+// beam (facing in, across the nook) spans the entrance and gates the bowl. The
+// laser always lives in D (the nook's room), so this replaces the old free-tile
+// laser placement.
 function nookEmitter() {
   const [ox, oy] = roomOrigin(NOOK.room[0], NOOK.room[1]);
   return [ox + NOOK.emitter[0], oy + NOOK.emitter[1]];

@@ -39,12 +39,12 @@ const m = state.map;
   ok(goldCt && goldCt.c === bowl[0] && goldCt.r === bowl[1], 'N2: the gold key container is the nook bowl');
 }
 
-// N3: the laser emitter sits on the mouth, facing out (east).
+// N3: the laser emitter sits on the mouth, facing in (west, across the nook).
 {
   const laser = state.guards.find((x) => x.laser);
   ok(!!laser, 'N3: the laser exists');
   ok(laser && laser.c !== undefined || (laser && Math.round((laser.x / T) - 0.5) === emitter[0] && Math.round((laser.y / T) - 0.5) === emitter[1]), 'N3: the laser emitter is on the nook mouth');
-  ok(laser && laser.beamDir === 0, 'N3: the beam points out (east)');
+  ok(laser && Math.abs(laser.beamDir - Math.PI) < 0.01, 'N3: the beam points in (west, across the nook)');
 }
 
 // N4: the nook interior is reachable (the floor tile beside the bowl, through the mouth).
@@ -55,15 +55,16 @@ const m = state.map;
   ok(reach, 'N4: the nook interior is reachable from spawn (through the mouth)');
 }
 
-// N5: the beam, when live, covers the mouth/approach (you must time it).
+// N5: the beam, when live, spans the nook (the bowl is on it) - you must time it.
 {
   const laser = state.guards.find((x) => x.laser);
   laser.asleep = false;   // beam live
+  // the bowl (the gold key) sits on the beam
+  state.player.x = (bowl[0] + 0.5) * T; state.player.y = (bowl[1] + 0.5) * T;
+  ok(g.beamContact(laser) === true, 'N5: the live beam covers the bowl (the key is gated)');
+  // outside the nook (the approach, east of the mouth) you are clear of the beam
   state.player.x = (approach[0] + 0.5) * T; state.player.y = (approach[1] + 0.5) * T;
-  ok(g.beamContact(laser) === true, 'N5: the live beam covers the approach (the gate is on)');
-  // inside the nook (west of the emitter) you are clear of the beam
-  state.player.x = (bowl[0] + 1.5) * T; state.player.y = (bowl[1] + 0.5) * T;
-  ok(g.beamContact(laser) === false, 'N5: inside the nook you are clear of the beam');
+  ok(g.beamContact(laser) === false, 'N5: outside the nook (the approach) you are clear of the beam');
 }
 
 // N6: the gold key stays in the solvable chain (the nook does not break it).

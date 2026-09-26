@@ -44,7 +44,7 @@ const ok = (cond, msg) => { console.log((cond ? 'PASS  ' : 'FAIL  ') + msg); if 
   g.reset(42); state.gameOver = false;
   const L = state.guards.find((x) => x.laser);
   L.dutyT = 0; L.asleep = false;   // beam live
-  state.player.x = L.x + 100; state.player.y = L.y;   // on the beam line, midpoint
+  state.player.x = L.x - 100; state.player.y = L.y;   // on the beam line (it spans west into the nook)
   state.player.invuln = 999;
   let alarmed = false;
   for (let i = 0; i < 5; i++) { g.update(1 / 60); if (state.alarmTime > 0) { alarmed = true; break; } }
